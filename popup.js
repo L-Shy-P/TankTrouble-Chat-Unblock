@@ -1,4 +1,4 @@
-// TT Chat Unblock — Popup (V2.8)
+// TT Chat Unblock — Popup (V2.9)
 
 var BASE = "https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/tree/master";
 
@@ -8,7 +8,7 @@ var T = {
   sig:   { en:"Signature", zh:"扩展签名", ja:"署名", ko:"서명", ru:"Подпись", ar:"توقيع", fr:"Signature", es:"Firma", de:"Signatur", pt:"Assinatura" },
   sigD:  { en:"Append [Chat Unblocker] tag for non-users", zh:"为未安装扩展的玩家显示签名", ja:"未インストールのプレイヤーに署名を表示", ko:"확장을 설치하지 않은 플레이어에게 서명 표시", ru:"Показать подпись для игроков без расширения", ar:"إظهار توقيع للاعبين بدون الملحق", fr:"Afficher la signature pour les joueurs sans extension", es:"Mostrar firma para jugadores sin extensión", de:"Signatur für Spieler ohne Erweiterung anzeigen", pt:"Mostrar assinatura para jogadores sem extensão" },
   ver:   { en:"Version Tag", zh:"版本号", ja:"バージョンタグ", ko:"버전 태그", ru:"Тег версии", ar:"علامة الإصدار", fr:"Tag de version", es:"Etiqueta de versión", de:"Versionstag", pt:"Tag de versão" },
-  verD:  { en:"Show \" | v2.8\" etc. version tags in decoded messages", zh:"在解码消息中显示\" | v2.8\"等版本号标识", ja:"デコードされたメッセージに\" | v2.8\"などのバージョンタグを表示", ko:"디코딩된 메시지에\" | v2.8\" 등의 버전 태그 표시", ru:"Показывать \" | v2.8\" и другие теги версий в декодированных сообщениях", ar:"إظهار \" | v2.8\" وغيرها من علامات الإصدار في الرسائل المفككة", fr:"Afficher \" | v2.8\" etc. dans les messages décodés", es:"Mostrar \" | v2.8\" etc. etiquetas de versión en mensajes decodificados", de:"\" | v2.8\" usw. Versionstags in dekodierten Nachrichten anzeigen", pt:"Mostrar \" | v2.8\" etc. tags de versão em mensagens decodificadas" },
+  verD:  { en:"Show \" | v2.9\" etc. version tags in decoded messages", zh:"在解码消息中显示\" | v2.9\"等版本号标识", ja:"デコードされたメッセージに\" | v2.9\"などのバージョンタグを表示", ko:"디코딩된 메시지에\" | v2.9\" 등의 버전 태그 표시", ru:"Показывать \" | v2.9\" и другие теги версий в декодированных сообщениях", ar:"إظهار \" | v2.9\" وغيرها من علامات الإصدار في الرسائل المفككة", fr:"Afficher \" | v2.9\" etc. dans les messages décodés", es:"Mostrar \" | v2.9\" etc. etiquetas de versión en mensajes decodificados", de:"\" | v2.9\" usw. Versionstags in dekodierten Nachrichten anzeigen", pt:"Mostrar \" | v2.9\" etc. tags de versão em mensagens decodificadas" },
   sigLock:{ en:"Signature is required in V1.2 mode", zh:"V1.2模式下签名必须开启", ja:"V1.2モードでは署名が必要です", ko:"V1.2 모드에서는 서명이 필요합니다", ru:"Подпись обязательна в режиме V1.2", ar:"التوقيع مطلوب في وضع V1.2", fr:"La signature est requise en mode V1.2", es:"La firma es requerida en modo V1.2", de:"Signatur ist im V1.2-Modus erforderlich", pt:"Assinatura é obrigatória no modo V1.2" },
   sigV1Warn:{ en:"Warning: If you turn off the signature, V1.2 users will not be able to see your message content.", zh:"警告：关闭签名后，V1.2用户将无法看到你的消息内容。", ja:"警告：署名をオフにすると、V1.2ユーザーはメッセージ内容を表示できません。", ko:"경고: 서명을 끄면 V1.2 사용자는 메시지 내용을 볼 수 없습니다.", ru:"Внимание: Если вы отключите подпись, пользователи V1.2 не смогут видеть ваши сообщения.", ar:"تحذير: إذا قمت بإيقاف التوقيع، لن يتمكن مستخدمو V1.2 من رؤية محتوى رسالتك.", fr:"Avertissement : Si vous désactivez la signature, les utilisateurs V1.2 ne pourront pas voir votre message.", es:"Advertencia: Si desactivas la firma, los usuarios V1.2 no podrán ver tu mensaje.", de:"Warnung: Wenn du die Signatur ausschaltest, können V1.2-Nutzer deine Nachricht nicht sehen.", pt:"Aviso: Se você desativar a assinatura, os usuários V1.2 não poderão ver sua mensagem." },
   fmt:   { en:"Message Format", zh:"消息格式", ja:"メッセージ形式", ko:"메시지 형식", ru:"Формат сообщения", ar:"تنسيق الرسالة", fr:"Format du message", es:"Formato del mensaje", de:"Nachrichtenformat", pt:"Formato da mensagem" },
@@ -34,7 +34,7 @@ var T = {
   done:  { en:"Copied!", zh:"已复制！", ja:"コピー完了！", ko:"복사됨!", ru:"Скопировано!", ar:"تم النسخ!", fr:"Copié !", es:"¡Copiado!", de:"Kopiert!", pt:"Copiado!" },
   by:    { en:"Made by L_Shy_P", zh:"L_Shy_P 制作", ja:"L_Shy_P 制作", ko:"L_Shy_P 제작", ru:"Создано L_Shy_P", ar:"صنع بواسطة L_Shy_P", fr:"Créé par L_Shy_P", es:"Hecho por L_Shy_P", de:"Von L_Shy_P", pt:"Feito por L_Shy_P" },
   mir:   { en:"Mirror Site", zh:"镜像网站", ja:"ミラーサイト", ko:"미러 사이트", ru:"Зеркало", ar:"موقع المرآة", fr:"Site miroir", es:"Sitio espejo", de:"Spiegelseite", pt:"Site espelho" },
-  mirD:  { en:"Run extension on cdn.tanktrouble.com", zh:"在 cdn.tanktrouble.com 上运行扩展", ja:"cdn.tanktrouble.com で拡張機能を実行", ko:"cdn.tanktrouble.com에서 확장 프로그램 실행", ru:"Запускать расширение на cdn.tanktrouble.com", ar:"تشغيل الإضافة على cdn.tanktrouble.com", fr:"Exécuter l'extension sur cdn.tanktrouble.com", es:"Ejecutar extensión en cdn.tanktrouble.com", de:"Erweiterung auf cdn.tanktrouble.com ausführen", pt:"Executar extensão em cdn.tanktrouble.com" },
+  mirD:  { en:"Run extension on cdn. and beta. prefixed sites", zh:"在 cdn. 和 beta. 前缀的网站上运行扩展", ja:"cdn. と beta. プレフィックスのサイトで拡張機能を実行", ko:"cdn. 및 beta. 접두사 사이트에서 확장 프로그램 실행", ru:"Запускать на сайтах с префиксом cdn. и beta.", ar:"تشغيل الإضافة على المواقع ببادئة cdn. و beta.", fr:"Exécuter l'extension sur les sites préfixés cdn. et beta.", es:"Ejecutar extensión en sitios con prefijo cdn. y beta.", de:"Erweiterung auf cdn. und beta. präfixierten Sites ausführen", pt:"Executar extensão em sites com prefixo cdn. e beta." },
   mirRefresh:{ en:"Refresh mirror site to apply", zh:"刷新镜像网页以应用更改", ja:"ミラーサイトを更新して適用", ko:"미러 사이트 새로고침 후 적용", ru:"Обновите зеркало для применения", ar:"قم بتحديث موقع المرآة للتطبيق", fr:"Actualisez le site miroir pour appliquer", es:"Actualiza el sitio espejo para aplicar", de:"Spiegelseite neu laden zum Anwenden", pt:"Atualize o site espelho para aplicar" },
   mirBtn:  { en:"Refresh", zh:"刷新", ja:"更新", ko:"새로고침", ru:"Обновить", ar:"تحديث", fr:"Actualiser", es:"Actualizar", de:"Aktualisieren", pt:"Atualizar" },
   verChk:{ en:"Checking for updates...", zh:"正在检查更新...", ja:"更新を確認中...", ko:"업데이트 확인 중...", ru:"Проверка обновлений...", ar:"جارٍ التحقق من التحديثات...", fr:"Vérification des mises à jour...", es:"Comprobando actualizaciones...", de:"Suche nach Updates...", pt:"Verificando atualizações..." },
@@ -303,7 +303,7 @@ mirToastBtn.addEventListener("click", function () {
   chrome.storage.local.remove("_mirPendingFrom");
   _mirOriginal = tglMir.checked;
   hideMirToast();
-  chrome.tabs.query({ url: "*://cdn.tanktrouble.com/*" }, function (tabs) {
+  chrome.tabs.query({ url: ["*://cdn.tanktrouble.com/*", "*://beta.tanktrouble.com/*"] }, function (tabs) {
     tabs.forEach(function (tab) { chrome.tabs.reload(tab.id); });
     window.close();
   });
@@ -453,7 +453,7 @@ resetBtn.addEventListener("click", function () {
   save("_resetRequest", Date.now());
 });
 
-var LOCAL_VER = "2.8";
+var LOCAL_VER = "2.9";
 var MANIFEST_URL = "https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/manifest.json";
 var verDot  = document.getElementById("verDot");
 var verLabel = document.getElementById("verLabel");

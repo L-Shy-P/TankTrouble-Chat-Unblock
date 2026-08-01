@@ -13,15 +13,15 @@
   try { if (localStorage.getItem("tt-lang") === null) localStorage.setItem("tt-lang", "en"); } catch (e) {}
 
   // 初始加载 → 发送给 MAIN world
-  chrome.storage.local.get(["signatureEnabled", "encodeEnabled", "format", "lang", "versionEnabled", "mirrorEnabled"], function (d) {
+  function sendInit(d) {
     var mir = d.mirrorEnabled !== undefined ? d.mirrorEnabled : true;
     try { localStorage.setItem("tt-mir", mir ? "1" : "0"); } catch (e) {}
     var lang = d.lang || "en";
     try { localStorage.setItem("tt-lang", lang); } catch (e) {}
     // 刷新后清除待处理标记，popup 不再显示刷新提示
-    if (location.hostname === "cdn.tanktrouble.com") chrome.storage.local.remove("_mirPendingFrom");
+    if (location.hostname === "cdn.tanktrouble.com" || location.hostname === "beta.tanktrouble.com") chrome.storage.local.remove("_mirPendingFrom");
     // 首次访问镜像站且实际应关闭 → 刷新一次确保 content.js 读到正确值
-    if (_mirWasNull && !mir && location.hostname === "cdn.tanktrouble.com") {
+    if (_mirWasNull && !mir && (location.hostname === "cdn.tanktrouble.com" || location.hostname === "beta.tanktrouble.com")) {
       location.reload();
       return;
     }
@@ -34,6 +34,16 @@
       ver: d.versionEnabled !== undefined ? d.versionEnabled : true,
       mir: mir
     });
+  }
+  chrome.storage.local.get(["signatureEnabled", "encodeEnabled", "format", "lang", "versionEnabled", "mirrorEnabled"], sendInit);
+
+  // 响应 content.js 的主动请求：若首次 init 因时序被错过，这里补发
+  // 注意 content.js 在 MAIN world，postMessage 跨世界可见，此监听器能稳定收到
+  window.addEventListener("message", function (e) {
+    if (!e.data || e.data.source !== "tt-content") return;
+    if (e.data.data && e.data.data.type === "request-init") {
+      chrome.storage.local.get(["signatureEnabled", "encodeEnabled", "format", "lang", "versionEnabled", "mirrorEnabled"], sendInit);
+    }
   });
 
   chrome.storage.onChanged.addListener(function (c) {

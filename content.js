@@ -1,9 +1,9 @@
-// TT Chat Unblock — MAIN world (V2.8)
+// TT Chat Unblock — MAIN world (V2.9)
 (function () {
   "use strict";
 
   // 镜像网站开关：关闭时跳过所有功能
-  if (location.hostname === "cdn.tanktrouble.com") {
+  if (location.hostname === "cdn.tanktrouble.com" || location.hostname === "beta.tanktrouble.com") {
     var _mirCheck = null;
     try { _mirCheck = localStorage.getItem("tt-mir"); } catch (e) {}
     if (_mirCheck === "0") {
@@ -12,7 +12,7 @@
     }
   }
 
-  var VERSION = "2.8";
+  var VERSION = "2.9";
   var V2_VER = " | v" + VERSION;
   var V2_SIG = V2_VER + " [Chat Unblocker]";
   var V1_SIG = " [Chat Unblocker]";
@@ -92,6 +92,10 @@
   };
 
   // ---- bridge 通信 ----
+  // 向 bridge 主动请求一次 init，防止首次 init 因时序问题被错过（新用户关键修复）
+  function requestInit() {
+    try { window.postMessage({ source: "tt-content", data: { type: "request-init" } }, "*"); } catch (e) {}
+  }
   window.addEventListener("message", function (e) {
     if (!e.data || e.data.source !== "tt-bridge") return;
     var d = e.data.data;
@@ -104,6 +108,10 @@
     if (d.type === "mir")   { settings.mir = d.value; console.log("[TT] mir→" + settings.mir); try { localStorage.setItem("tt-mir", d.value ? "1" : "0"); } catch (e) {} }
     if (d.type === "reset") { doReset(); }
   });
+  // 脚本启动即请求 init（bridge 在 document_start 已注册监听，可立即响应）
+  requestInit();
+  // 兜底：延迟再请求一次，覆盖 document_start → document_idle 之间的所有时序
+  setTimeout(requestInit, 300);
 
   // ---- 切换消息显示（编码开关 → 从 _raw 实时解析后重绘） ----
   function toggleMessages() {
@@ -254,7 +262,8 @@
   // ---- 全局CSS：选中样式修复 + 文本换行修复 + 复制按钮样式 ----
   var style = document.createElement("style");
   style.textContent = [
-    "[data-tt-chat-body], [data-tt-chat-body] * { user-select: text !important; -webkit-user-select: text !important; }",
+    "[data-tt-chat-body], [data-tt-chat-body] *:not(.username):not(a) { user-select: text !important; -webkit-user-select: text !important; }",
+    "[data-tt-chat-body] .username, [data-tt-chat-body] a { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }",
     "[data-tt-chat-body] { overflow-x: hidden !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }",
     "[data-tt-chat-body] > div, [data-tt-chat-body] > p, [data-tt-chat-body] > td, [data-tt-chat-body] div > div, [data-tt-chat-body] td > div, [data-tt-chat-body] td > p { word-wrap: break-word !important; overflow-wrap: break-word !important; word-break: break-word !important; white-space: normal !important; max-width: 100% !important; }",
     "[data-tt-chat-body] *::selection { background: #4f8 !important; color: #000 !important; text-shadow: none !important; -webkit-text-stroke: 0px !important; -webkit-text-fill-color: #000 !important; }",
@@ -844,6 +853,9 @@
         if (decoded) {
           if (prevLen < CB.messages.length) {
             storeRaw(raw);
+          } else {
+            // 消息可能被异步添加（首条消息/动画/批量场景），延迟重试确保 _raw 落位
+            setTimeout(function () { storeRaw(raw); }, 50);
           }
         }
         return result;
@@ -876,6 +888,9 @@
       if (decoded) {
         if (prevLen < CB.messages.length) {
           storeRaw(raw);
+        } else {
+          // 与 mkDec 同步：异步添加时延迟重试
+          setTimeout(function () { storeRaw(raw); }, 50);
         }
       }
       return result;

@@ -3,6 +3,11 @@
 > Browser extension to unlock multi-language chat in TankTrouble.com
 
 <p align="center">
+  📖 <a href="docs/INSTALL.md"><b>Install Guide & FAQ</b></a> &nbsp;|&nbsp;
+  📋 <a href="#changelog--更新日志"><b>Changelog</b></a>
+</p>
+
+<p align="center">
   <b>English</b> &nbsp;|&nbsp;
   <a href="#中文">中文</a> &nbsp;|&nbsp;
   <a href="#日本語">日本語</a> &nbsp;|&nbsp;
@@ -28,6 +33,13 @@ TankTrouble.com blocks non-ASCII characters in chat — Chinese, Japanese, Korea
 - ⏱ **Timeout recovery** — auto-resets UI when server drops the receipt
 - 🎛 **Popup panel** with language selector (10 languages)
 - ✍️ **Signature watermark** — non-extension users see `[Chat Unblocker]` tag
+
+### What's New in v2.9
+- 🌐 **Mirror site expansion** — `beta.tanktrouble.com` now grouped with `cdn.tanktrouble.com` under the Mirror Site toggle; description simplified to "cdn. and beta. prefixed sites"
+- 🐛 **Encoding toggle regression fix** — restored `setTimeout` fallback in `_raw` storage so the encoding switch reliably swaps decoded/raw views (regression from v2.5)
+- 🐛 **@mention compatibility** — `.username` and `<a>` excluded from `user-select: text` to stop copy extensions breaking @clicks
+- 🐛 **New-user init fix** — content.js actively requests `init` from bridge; manifest `matches` covers `*.tanktrouble.com` so `www.`/`beta.` users aren't left without decoding
+- 📄 **Install/Update/FAQ** — moved to [docs/INSTALL.md](docs/INSTALL.md)
 
 ### What's New in v2.8
 - 🪞 **Mirror site toggle** — improved mirror-site switch with refresh prompt; toast dismisses after refresh; fixed rapid-toggle animation glitches
@@ -104,6 +116,13 @@ TankTrouble.com 的聊天系统会拦截非 ASCII 字符——中文、日文、
 - 🎛 多语言弹出面板（10 种语言）
 - ✍️ 未装扩展的玩家会看到 `[Chat Unblocker]` 签名水印
 
+### v2.9 更新内容
+- 🌐 **镜像站扩展** — `beta.tanktrouble.com` 现与 `cdn.tanktrouble.com` 一并纳入"镜像网站"开关；描述简化为"cdn. 和 beta. 前缀的网站"
+- 🐛 **编码开关回归修复** — 恢复 `_raw` 存储的 `setTimeout` 兜底，编码开关可可靠切换解码/原文（v2.5 起的回归）
+- 🐛 **@私聊兼容性修复** — `.username` 和 `<a>` 从 `user-select: text` 排除，避免复制扩展破坏 @ 点击
+- 🐛 **新用户初始化修复** — content.js 主动请求 init；manifest matches 覆盖 `*.tanktrouble.com`，`www.`/`beta.` 用户也能解码
+- 📄 **安装/更新/常见问题** — 移至 [docs/INSTALL.md](docs/INSTALL.md)
+
 ### v2.8 更新内容
 - 🪞 **镜像网站开关** — 优化镜像站开关与刷新提示；点击刷新后提示消失；修复快速切换时的动画跳变
 - 🎨 **视觉体验优化** — 自定义下拉菜单、操作按钮样式、提示栏动画等整体打磨
@@ -167,6 +186,13 @@ TankTrouble.com のチャットは非 ASCII 文字をブロックします。こ
 - ⏱ 応答喪失時の自動 UI 復帰
 - 🎛 10 言語対応ポップアップパネル
 
+### v2.9 の新機能
+- 🌐 **ミラーサイト拡張** — `beta.tanktrouble.com` が `cdn.tanktrouble.com` と共にミラーサイトスイッチに統合；説明は「cdn. と beta. プレフィックスのサイト」に簡略化
+- 🐛 **エンコード切替リグレッション修正** — `_raw` 保存の `setTimeout` フォールバックを復元し、切替が確実に動作（v2.5 からの回帰）
+- 🐛 **@メンション互換性** — `.username` と `<a>` を `user-select: text` から除外し、コピ拡張が @ クリックを壊さないように
+- 🐛 **新規ユーザー初期化修正** — content.js が bridge に `init` をリクエスト；`matches` が `*.tanktrouble.com` をカバーし `www.`/`beta.` も解決
+- 📄 **インストール/更新/FAQ** — [docs/INSTALL.md](docs/INSTALL.md) に移動
+
 ### v2.8 の新機能
 - 🪞 **ミラーサイトスイッチ** — ミラーサイト切替と更新プロンプトを改善；更新後にプロンプトを非表示；素早い切替時のアニメーション不具合を修正
 - 🎨 **視覚体験の最適化** — カスタムドロップダウン、ボタンスタイル、警告アニメーションなどを改善
@@ -226,6 +252,13 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🔐 XOR 스크램블로 필터 우회
 - ⏱ 응답 없을 시 UI 자동 복구
 - 🎛 다국어 패널 (10 개 언어)
+
+### v2.9 업데이트 내용
+- 🌐 **미러 사이트 확장** — `beta.tanktrouble.com`이 `cdn.tanktrouble.com`과 함께 미러 사이트 스위치에 통합; 설명은 "cdn. 및 beta. 접두사 사이트"로 간소화
+- 🐛 **인코딩 토글 회귀 수정** — `_raw` 저장의 `setTimeout` 폴백 복원, 토글이 안정적으로 동작 (v2.5부터 회귀)
+- 🐛 **@멘션 호환성** — `.username`/`<a>`를 `user-select: text`에서 제외, 복사 확장이 @ 클릭을 망가뜨리지 않게
+- 🐛 **신규 사용자 초기화 수정** — content.js가 bridge에 `init` 요청; `matches`가 `*.tanktrouble.com`을 덮어 `www.`/`beta.`도 해결
+- 📄 **설치/업데이트/FAQ** — [docs/INSTALL.md](docs/INSTALL.md)로 이동
 
 ### v2.8 업데이트 내용
 - 🪞 **미러 사이트 스위치** — 미러 사이트 토글 및 새로고침 안내 개선; 새로고침 후 안내 자동 닫힘; 빠른 전환 시 애니메이션 버그 수정
@@ -287,6 +320,13 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - ⏱ Автовосстановление UI при потере ответа
 - 🎛 Многоязычная панель (10 языков)
 
+### Новое в v2.9
+- 🌐 **Расширение зеркала** — `beta.tanktrouble.com` теперь вместе с `cdn.tanktrouble.com` под переключателем зеркала; описание упрощено до "сайты с префиксом cdn. и beta."
+- 🐛 **Регресс переключателя кодирования** — восстановлен `setTimeout`-фолбэк хранения `_raw`, переключатель надёжно меняет декодированный/сырой вид (регрессия с v2.5)
+- 🐛 **Совместимость @упоминаний** — `.username` и `<a>` исключены из `user-select: text`, копирующие расширения больше не ломают @клики
+- 🐛 **Инициализация новых пользователей** — content.js сам запрашивает `init` у bridge; `matches` покрывает `*.tanktrouble.com`, `www.`/`beta.` тоже работают
+- 📄 **Установка/обновление/FAQ** — перенесено в [docs/INSTALL.md](docs/INSTALL.md)
+
 ### Новое в v2.8
 - 🪞 **Переключатель зеркала** — улучшен переключатель зеркала и подсказка обновления; подсказка исчезает после обновления; исправлены сбои анимации при быстром переключении
 - 🎨 **Визуальные улучшения** — кастомные выпадающие списки, стили кнопок, анимации предупреждений
@@ -338,6 +378,13 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🔐 تشفير XOR لتجاوز الفلاتر
 - ⏱ استرداد تلقائي للواجهة
 - 🎛 لوحة متعددة اللغات (10 لغات)
+
+### الجديد في v2.9
+- 🌐 **توسيع المرآة** — `beta.tanktrouble.com` الآن مع `cdn.tanktrouble.com` تحت مفتاح المرآة؛ الوصف مبسط إلى "مواقع ببادئة cdn. و beta."
+- 🐛 **إصلاح ارتداد مفتاح الترميز** — استعادة احتياطي `setTimeout` لتخزين `_raw`، المفتاح يبدل الموثوق (ارتداد من v2.5)
+- 🐛 **توافق @الإشارة** — استثناء `.username` و`<a>` من `user-select: text`، امتدادات النسخ لم تعد تعطل @
+- 🐛 **إصلاح تهيئة المستخدم الجديد** — content.js يطلب `init` من bridge؛ `matches` يغطي `*.tanktrouble.com`، `www.`/`beta.` يعملون أيضاً
+- 📄 **تثبيت/تحديث/الأسئلة الشائعة** — نقل إلى [docs/INSTALL.md](docs/INSTALL.md)
 
 ### الجديد في v2.8
 - 🪞 **مفتاح الموقع المرآة** — تحسين مفتاح الموقع المرآة وتلميح التحديث؛ يختفي التلميح بعد التحديث؛ إصلاح مشاكل الرسوم المتحركة عند التبديل السريع
@@ -391,6 +438,13 @@ Le chat de TankTrouble.com bloque les caractères non-ASCII. Cette extension enc
 - ⏱ Récupération automatique de l'IU
 - 🎛 Panneau multilingue (10 langues)
 
+### Nouveautés v2.9
+- 🌐 **Extension du miroir** — `beta.tanktrouble.com` désormais avec `cdn.tanktrouble.com` sous l'interrupteur miroir ; description simplifiée en « sites préfixés cdn. et beta. »
+- 🐛 **Régression du commutateur d'encodage** — restauration du fallback `setTimeout` pour `_raw`, le commutateur bascule fiable (régression depuis v2.5)
+- 🐛 **Compatibilité @mention** — `.username` et `<a>` exclus de `user-select: text`, les extensions de copie ne cassent plus @
+- 🐛 **Init nouvel utilisateur** — content.js demande `init` au bridge ; `matches` couvre `*.tanktrouble.com`, `www.`/`beta.` fonctionnent aussi
+- 📄 **Installation/maj/FAQ** — déplacé vers [docs/INSTALL.md](docs/INSTALL.md)
+
 ### Nouveautés v2.8
 - 🪞 **Interrupteur site miroir** — amélioration du switch miroir et de l'invite de rafraîchissement ; l'invite disparaît après rafraîchissement ; correction des bugs d'animation lors de basculements rapides
 - 🎨 **Expérience visuelle** — menus déroulants personnalisés, styles de boutons, animations d'avertissement
@@ -442,6 +496,13 @@ El chat de TankTrouble.com bloquea caracteres no-ASCII. Esta extensión codifica
 - 🔐 Ofuscación XOR anti-filtro
 - ⏱ Recuperación automática de IU
 - 🎛 Panel multilingüe (10 idiomas)
+
+### Novedades v2.9
+- 🌐 **Expansión del espejo** — `beta.tanktrouble.com` ahora con `cdn.tanktrouble.com` bajo el interruptor espejo; descripción simplificada a "sitios con prefijo cdn. y beta."
+- 🐛 **Regresión del conmutador de codificación** — restaurado el fallback `setTimeout` para `_raw`, el conmutador alterna fiable (regresión desde v2.5)
+- 🐛 **Compatibilidad @mención** — `.username` y `<a>` excluidos de `user-select: text`, las extensiones de copia ya no rompen @
+- 🐛 **Init nuevo usuario** — content.js pide `init` al bridge; `matches` cubre `*.tanktrouble.com`, `www.`/`beta.` también funcionan
+- 📄 **Instalación/actualización/FAQ** — movido a [docs/INSTALL.md](docs/INSTALL.md)
 
 ### Novedades v2.8
 - 🪞 **Interruptor de sitio espejo** — mejora del switch de espejo y aviso de actualización; el aviso desaparece tras actualizar; corrección de animaciones al cambiar rápido
@@ -495,6 +556,13 @@ Der Chat von TankTrouble.com blockiert nicht-ASCII Zeichen. Diese Erweiterung ko
 - ⏱ Automatische UI-Wiederherstellung
 - 🎛 Mehrsprachiges Panel (10 Sprachen)
 
+### Neu in v2.9
+- 🌐 **Spiegel-Erweiterung** — `beta.tanktrouble.com` nun mit `cdn.tanktrouble.com` unter dem Spiegelschalter; Beschreibung vereinfacht zu „Sites mit cdn. und beta. Präfix"
+- 🐛 **Regression Kodierungsschalter** — `setTimeout`-Fallback für `_raw` wiederhergestellt, Schalter schaltet zuverlässig (Regression seit v2.5)
+- 🐛 **@Erwähnung Kompatibilität** — `.username` und `<a>` aus `user-select: text` ausgeschlossen, Kopier-Erweiterungen brechen @ nicht mehr
+- 🐛 **Neu-Nutzer-Init** — content.js fordert `init` von bridge; `matches` deckt `*.tanktrouble.com`, `www.`/`beta.` funktionieren auch
+- 📄 **Installation/Update/FAQ** — verschoben nach [docs/INSTALL.md](docs/INSTALL.md)
+
 ### Neu in v2.8
 - 🪞 **Spiegelseiten-Schalter** — verbesserter Mirror-Switch und Aktualisierungshinweis; Hinweis verschwindet nach Refresh; Animationsfehler bei schnellem Umschalten behoben
 - 🎨 **Visuelle Optimierung** — benutzerdefinierte Dropdowns, Button-Stile, Warnanimations
@@ -547,6 +615,13 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 - ⏱ Recuperação automática da UI
 - 🎛 Painel multilíngue (10 idiomas)
 
+### Novidades v2.9
+- 🌐 **Expansão do espelho** — `beta.tanktrouble.com` agora com `cdn.tanktrouble.com` sob o interruptor espelho; descrição simplificada para "sites com prefixo cdn. e beta."
+- 🐛 **Regressão do interruptor de codificação** — restaurado o fallback `setTimeout` para `_raw`, o interruptor alterna confiavelmente (regressão desde v2.5)
+- 🐛 **Compatibilidade @menção** — `.username` e `<a>` excluídos de `user-select: text`, extensões de cópia não quebram mais @
+- 🐛 **Init novo usuário** — content.js pede `init` ao bridge; `matches` cobre `*.tanktrouble.com`, `www.`/`beta.` também funcionam
+- 📄 **Instalação/atualização/FAQ** — movido para [docs/INSTALL.md](docs/INSTALL.md)
+
 ### Novidades v2.8
 - 🪞 **Interruptor do site espelho** — melhoria do switch de espelho e aviso de atualização; aviso some após atualizar; correção de animação ao alternar rapidamente
 - 🎨 **Experiência visual** — menus suspensos personalizados, estilos de botões, animações de aviso
@@ -593,6 +668,116 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 MIT © 2026 L_Shy_P
 
 ## Changelog / 更新日志
+
+### v2.9 — 2026-08-02
+
+**Major / 重要更新：**
+- 🌐 **Mirror site expansion** — `beta.tanktrouble.com` now grouped with `cdn.tanktrouble.com` under the Mirror Site toggle; description simplified to "cdn. and beta. prefixed sites"
+- 🌐 **镜像站扩展** — `beta.tanktrouble.com` 现与 `cdn.tanktrouble.com` 一并纳入"镜像网站"开关；描述简化为"cdn. 和 beta. 前缀的网站"
+- 🐛 **Encoding toggle fix** — restored `setTimeout` fallback in `_raw` storage so the encoding switch reliably swaps decoded/raw views (regression from v2.5)
+- 🐛 **编码开关修复** — 恢复 `_raw` 存储的 `setTimeout` 兜底，编码开关可可靠切换解码/原文（v2.5 起的回归）
+- 🐛 **@mention fix** — `.username`/`<a>` excluded from `user-select: text` to stop copy extensions breaking @clicks
+- 🐛 **@私聊修复** — `.username`/`<a>` 从 `user-select: text` 排除，避免复制扩展破坏 @ 点击
+- 🐛 **New-user init fix** — content.js actively requests `init` from bridge; manifest `matches` covers `*.tanktrouble.com`
+- 🐛 **新用户初始化修复** — content.js 主动请求 init；manifest matches 覆盖 `*.tanktrouble.com`
+- 📄 **Install/Update/FAQ** — moved to [docs/INSTALL.md](docs/INSTALL.md)
+- 📄 **安装/更新/常见问题** — 移至 [docs/INSTALL.md](docs/INSTALL.md)
+
+> ⚠️ **Known issue / 已知问题：** @mention may still occasionally conflict with "万能复制/万能粘贴" extensions — disable them on tanktrouble.com if @clicks fail.
+> @私聊仍可能与"万能复制/万能粘贴"扩展偶发冲突——若 @ 点击失效，请在 tanktrouble.com 上禁用这些扩展。
+
+### v2.8 — 2026-07
+
+**Major / 重要更新：**
+- 🪞 **Mirror site toggle** — improved mirror-site switch with refresh prompt; toast dismisses after refresh; fixed rapid-toggle animation glitches
+- 🪞 **镜像网站开关** — 优化镜像站开关与刷新提示；点击刷新后提示消失；修复快速切换时的动画跳变
+- 🎨 **Visual polish** — custom dropdown overlays, refined action button styles, restored warning toast animations
+- 🎨 **视觉体验优化** — 自定义下拉菜单、操作按钮样式、提示栏动画等整体打磨
+
+> ⚠️ **Inherited regression / 继承的回归：** Encoding toggle lost raw-view swap (fixed in v2.9). New users on `www.tanktrouble.com` had no decoding (fixed in v2.9).
+> 编码开关丢失原文切换（v2.9 修复）。新用户在 `www.tanktrouble.com` 无法解码（v2.9 修复）。
+
+### v2.7 — 2026-07
+
+**Major / 重要更新：**
+- 🎬 **Title fade-in** — title bar fades in (0.55s easeOutExpo); switches stay still via `init-lock`
+- 🎬 **标题淡入** — 标题栏淡入（0.55s easeOutExpo）；开关通过 `init-lock` 保持静止
+- 🎞️ **Custom dropdown animation** — Message Format and Page Language use drawer-style dropdown (0.35s easeOutExpo)
+- 🎞️ **自定义下拉动画** — 消息格式和页面语言使用抽屉式下拉（0.35s easeOutExpo）
+- 🌐 **Error message refinement** — improved "user not found" error for @mention
+- 🌐 **错误消息优化** — 改进 @私聊"用户未找到"的错误文本
+- 🖱️ **Copy menu UX** — 500ms leave delay; extended icon hit area
+- 🖱️ **复制菜单优化** — 500ms 离开延迟；扩展图标命中区域
+- 🔩 **Popup layout fix** — long description wraps without pushing selector
+- 🔩 **弹窗布局修复** — 长描述换行而不挤压选择器
+- 🐛 **Copy name fix** — strips trailing colon and space
+- 🐛 **复制名字修复** — 去除尾部冒号和空格
+
+### v2.6 — 2026-06
+
+**Major / 重要更新：**
+- 🎛 **Version number toggle** — signature watermark includes toggleable version number (` | v2.6 [Chat Unblocker]`)
+- 🎛 **版本号开关** — 签名水印含可切换版本号（` | v2.6 [Chat Unblocker]`）
+- 📋 **Fluent copy menu** — hover message to reveal copy icon; 3 options (text/full/name)
+- 📋 **流畅复制菜单** — 悬停消息显示复制图标；3 选项（文本/完整/名字）
+- 🌍 **Full i18n** — copy menu and labels in 10 languages
+- 🌍 **完整 i18n** — 复制菜单和标签支持 10 语言
+- 🎬 **Fluent animations** — elastic cubic-bezier, velocity-aware, scale-pulse
+- 🎬 **Fluent 动画** — 弹性贝塞尔曲线、速度感知、缩放脉冲
+- 🐛 **Text selection visibility** — green background + black text on selection
+- 🐛 **文本选中可见性** — 选中显示绿色背景+黑字
+- 🔧 **Dynamic chat detection** — runtime `CB.chatBody` detection
+- 🔧 **动态聊天检测** — 运行时 `CB.chatBody` 检测
+
+### v2.5 — 2026-06
+
+**Major / 重要更新：**
+- 🏷️ **Version tag in signature** — V2 messages include ` | v2.5 [Chat Unblocker]`
+- 🏷️ **签名版本标签** — V2 消息含 ` | v2.5 [Chat Unblocker]`
+- 🔄 **V1.2 compatibility** — V1.2 mode shows version suffix
+- 🔄 **V1.2 兼容** — V1.2 模式显示版本后缀
+- 🔒 **Signature lock for V1.2** — signature locked in V1.2; warning on first close
+- 🔒 **V1.2 签名锁定** — V1.2 模式锁定签名；首次关闭触发警告
+- ⚠️ **Smooth warning animations** — expand/collapse transitions
+- ⚠️ **平滑警告动画** — 展开/收起过渡
+- 🎨 **Signature switch feedback** — shake animation, red background
+- 🎨 **签名开关反馈** — 抖动动画、红色背景
+- 📦 **Format selector animation** — smooth expand/collapse
+- 📦 **格式选择器动画** — 平滑展开/收起
+
+> ⚠️ **Regression introduced / 引入的回归：** `storeRaw` lost its `setTimeout` fallback — async-added messages no longer stored `_raw`, breaking the encoding toggle. Fixed in v2.9.
+> `storeRaw` 丢失 `setTimeout` 兜底——异步添加的消息不再存储 `_raw`，破坏编码开关。v2.9 修复。
+
+### v2.4 — 2026-05
+
+**Major / 重要更新：**
+- 🐛 **First message toggle fix** — first received message correctly switches decoded/raw
+- 🐛 **首条消息切换修复** — 首条接收消息正确切换解码/原文
+- 🐛 **Double-click duplication fix** — rapid toggle no longer doubles text
+- 🐛 **双击重复修复** — 快速切换不再导致文本翻倍
+- 🐛 **State persistence fix** — messages maintain display state across toggles
+- 🐛 **状态持久化修复** — 消息在切换间保持显示状态
+- 🏷️ **Signature reverted** — back to `[Chat Unblocker]` without version
+- 🏷️ **签名回退** — 回到无版本号的 `[Chat Unblocker]`
+- 🌐 **Page language label** — new label above language selector
+- 🌐 **页面语言标签** — 语言选择器上方新标签
+
+### v2.3 — 2026-05
+
+**Major / 重要更新：**
+- 🐛 **V1.2 compatibility fix** — v1 mode uses correct V1 signature; v1.2 users can read again
+- 🐛 **V1.2 兼容修复** — v1 模式使用正确 V1 签名；v1.2 用户可重新阅读
+- 🔄 **Format switcher** — choose V2 (`~XXXX`) or V1.2 (`\uXXXX`)
+- 🔄 **格式切换器** — 选择 V2（`~XXXX`）或 V1.2（`\uXXXX`）
+- ⚠️ **V1.2 warning** — warns some V1.2 combos may be blocked by server
+- ⚠️ **V1.2 警告** — 警告部分 V1.2 组合可能被服务器拦截
+- 🏷️ **Version signature** — V2 messages prefixed `[Chat Unblocker V2.3]`
+- 🏷️ **版本签名** — V2 消息前缀 `[Chat Unblocker V2.3]`
+- 🌐 **V1.2 label** — old format shows `[V1.2 Format]` prefix (i18n)
+- 🌐 **V1.2 标签** — 旧格式显示 `[V1.2 格式]` 前缀（i18n）
+
+> ⚠️ **Known issue / 已知问题：** V1.2 format may be blocked by the game server for certain character combinations. Use V2.x for reliability.
+> V1.2 格式可能因某些字符组合被游戏服务器拦截。建议使用 V2.x。
 
 ### v2.2 — 2026-05-15
 
@@ -648,29 +833,10 @@ MIT © 2026 L_Shy_P
 
 ---
 
-## How to Update / 更新方法（无需下载）
+## How to Update / 更新方法
 
-**English：** Open [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → paste into your local `content.js` file → go to `chrome://extensions/` → click ↻ on the extension card.
-
-**中文：** 打开 [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → 全选复制 → 粘贴替换本地 `content.js` → 打开 `chrome://extensions/` → 点扩展卡片上的 ↻。
-
-**日本語：** [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) を開く → 全選択コピー → ローカルの `content.js` に上書き → `chrome://extensions/` → ↻ クリック。
-
-**한국어：** [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) 열기 → 전체 복사 → 로컬 `content.js`에 붙여넣기 → `chrome://extensions/` → ↻ 클릭.
-
-**Русский：** Откройте [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → вставьте в локальный `content.js` → `chrome://extensions/` → нажмите ↻.
-
-**العربية：** افتح [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → نسخ الكل → لصق في الملف المحلي `content.js` → `chrome://extensions/` → اضغط ↻.
-
-**Français：** Ouvrez [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → collez dans votre `content.js` local → `chrome://extensions/` → cliquez ↻.
-
-**Español：** Abra [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → pegue en su `content.js` local → `chrome://extensions/` → haga clic en ↻.
-
-**Deutsch：** Öffnen Sie [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → in lokale `content.js` einfügen → `chrome://extensions/` → ↻ klicken.
-
-**Português：** Abra [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → cole no seu `content.js` local → `chrome://extensions/` → clique em ↻.
-
-> 💡 **Tip:** Usually only `content.js` changes. If the changelog mentions `bridge.js` or `popup.js`, update those too the same way.
+📖 See [docs/INSTALL.md](docs/INSTALL.md) for the update guide in all 10 languages.
+📖 查看 [docs/INSTALL.md](docs/INSTALL.md) 获取 10 语言的更新教程。
 
 ## Links
 
