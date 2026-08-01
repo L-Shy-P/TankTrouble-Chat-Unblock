@@ -7,18 +7,34 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 300px; font-family: system-ui, sans-serif; background: #1a1a2e; color: #e0e0e0; font-size: 13px; }
-    .header { background: linear-gradient(135deg, #16213e, #0f3460); padding: 14px 16px; text-align: center; border-bottom: 1px solid #333; }
+    .header { position: relative; z-index: 10; background: linear-gradient(135deg, #16213e, #0f3460); padding: 14px 16px; text-align: center; border-bottom: 1px solid #333; }
+    .header-inner { opacity: 0; transition: opacity .55s cubic-bezier(0.16, 1, 0.3, 1); }
+    body.open .header-inner { opacity: 1; }
     .header h1 { font-size: 15px; color: #4f8; }
     .header .ver { font-size: 10px; color: #888; margin-top: 2px; }
     .dot-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: #4f8; box-shadow: 0 0 6px #4f8; }
     .dot.off { background: #f44; box-shadow: 0 0 6px #f44; }
-    .content { padding: 10px 16px; }
+    body.pre-open .toggle input + .s,
+    body.pre-open .toggle input + .s::before,
+    body.pre-open .toggle,
+    body.pre-open .toggle * { 
+      transition: none !important; 
+      animation: none !important; 
+    }
+    .toggle.init-lock .s,
+    .toggle.init-lock .s::before,
+    .toggle.init-lock input + .s,
+    .toggle.init-lock input + .s::before { 
+      transition: none !important; 
+      animation: none !important; 
+    }
+    .content { position: relative; padding: 10px 16px; }
 
     .setting { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #2a2a3e; }
-    .setting-label { display: flex; flex-direction: column; }
+    .setting-label { display: flex; flex-direction: column; flex: 1; min-width: 0; margin-right: 8px; }
     .setting-label .t { font-weight: 600; }
-    .setting-label .d { font-size: 10px; color: #888; margin-top: 1px; }
+    .setting-label .d { font-size: 10px; color: #888; margin-top: 1px; word-break: break-word; }
 
     .toggle { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
@@ -40,18 +56,110 @@
       100% { transform: translateX(0); }
     }
 
-    .lang-select { width: 100%; padding: 5px 8px; margin: 0; background: #2a2a3e; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; font-size: 12px; outline: none; }
-    .lang-anim { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .3s ease, opacity .3s ease; }
-    .lang-anim.show { max-height: 40px; opacity: 1; }
+    /* 下拉：绝对定位覆盖，格式/语言同一套过渡 */
+    .dropdown { width: 100%; }
+    .dropdown--overlay { position: relative; }
+    .dropdown--overlay.dropdown--compact { flex: 0 0 auto; min-width: 130px; max-width: 150px; }
+    .dropdown--overlay.open { z-index: 50; }
+    .drop-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 5px 8px; background: #2a2a3e; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; font-size: 12px; font-family: inherit; cursor: pointer; outline: none; transition: border-color .2s, background .2s; }
+    .drop-btn:hover { border-color: #4f8; background: #323248; }
+    .drop-btn:focus { border-color: #4f8; }
+    .drop-arrow { font-size: 10px; margin-left: 6px; color: #888; transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1); flex-shrink: 0; }
+    .dropdown.open .drop-arrow { transform: rotate(180deg); }
+    .dropdown--overlay .drop-menu {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: grid;
+      grid-template-rows: 0fr;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: grid-template-rows .38s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease, visibility .3s;
+    }
+    .dropdown--overlay.open .drop-menu {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .drop-menu-inner {
+      overflow: hidden;
+      min-height: 0;
+      background: #2a2a3e;
+      border: 1px solid #444;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    .dropdown--lang.open .drop-menu-inner { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #555 transparent; }
+    .drop-item { padding: 6px 10px; font-size: 12px; color: #e0e0e0; cursor: pointer; transition: background .15s, color .15s; }
+    .drop-item:hover { background: #3a3a5a; color: #4f8; }
+    .drop-item.active { color: #4f8; background: #2f2f4a; }
+
+    /* 语言下拉：略紧凑，动画与格式下拉一致（向下覆盖） */
+    .dropdown--lang { margin-bottom: 8px; }
+    .dropdown--lang .drop-item { padding: 5px 8px; font-size: 11px; line-height: 1.35; }
+
+    /* 操作按钮：默认微染色底 + 彩色边框/文字，悬停加深并发光 */
+    .btn-action {
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: 600;
+      box-shadow: none;
+      transition: background .2s, border-color .2s, color .2s, box-shadow .2s, transform .1s;
+    }
+    .btn-action:active { transform: scale(0.98); }
+    .btn-action--copy {
+      padding: 5px 10px;
+      font-size: 11px;
+      white-space: nowrap;
+      background: rgba(77, 163, 255, 0.12);
+      border: 1px solid #4da3ff;
+      color: #7ec0ff;
+    }
+    .btn-action--copy:hover {
+      background: rgba(37, 99, 168, 0.42);
+      border-color: #7bbfff;
+      color: #a8d8ff;
+      box-shadow: 0 0 12px rgba(77, 163, 255, 0.55), inset 0 0 12px rgba(77, 163, 255, 0.12);
+    }
+    .btn-action--reset {
+      width: 100%;
+      padding: 7px;
+      font-size: 12px;
+      background: rgba(255, 136, 68, 0.12);
+      border: 1px solid #ff8844;
+      color: #ffaa66;
+    }
+    .btn-action--reset:hover {
+      background: rgba(168, 72, 24, 0.42);
+      border-color: #ffaa66;
+      color: #ffc088;
+      box-shadow: 0 0 12px rgba(255, 136, 68, 0.5), inset 0 0 12px rgba(255, 136, 68, 0.1);
+    }
+    .btn-action--refresh {
+      padding: 5px 12px;
+      font-size: 11px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      background: rgba(68, 255, 136, 0.12);
+      border: 1px solid #4f8;
+      color: #8f8;
+    }
+    .btn-action--refresh:hover {
+      background: rgba(34, 120, 68, 0.42);
+      border-color: #7fc;
+      color: #aaf8aa;
+      box-shadow: 0 0 12px rgba(68, 255, 136, 0.55), inset 0 0 12px rgba(68, 255, 136, 0.12);
+    }
 
     .copy-row { display: flex; gap: 6px; margin: 8px 0 4px; }
     .copy-row input { flex: 1; padding: 5px 8px; font-size: 10px; background: #2a2a3e; color: #aaa; border: 1px solid #444; border-radius: 4px; user-select: all; }
-    .copy-row button { padding: 5px 10px; font-size: 11px; white-space: nowrap; background: #0f3460; color: #4f8; border: 1px solid #4f8; border-radius: 4px; cursor: pointer; transition: 0.15s; }
-    .copy-row button:hover { background: #4f8; color: #1a1a2e; }
-
     .btn-row { margin: 8px 0; }
-    .btn-row button { width: 100%; padding: 7px; font-size: 12px; background: #0f3460; color: #f80; border: 1px solid #f80; border-radius: 4px; cursor: pointer; transition: 0.15s; }
-    .btn-row button:hover { background: #f80; color: #1a1a2e; }
 
     .warning { background: #3a2a00; border: 1px solid #fc0; border-radius: 4px; padding: 0 10px; margin: 0; font-size: 11px; color: #fc0; display: flex; gap: 6px; align-items: flex-start; max-height: 0; opacity: 0; overflow: hidden; transition: max-height .3s ease, opacity .3s ease, padding .3s ease, margin .3s ease; }
     .warning.show { max-height: 100px; opacity: 1; padding: 8px 10px; margin: 8px 0; }
@@ -66,21 +174,26 @@
     .ver-dot.ok { background: #4f8; box-shadow: 0 0 6px #4f8; }
     .ver-text { font-size: 11px; color: #aaa; }
 
+    .mir-row { display: flex; align-items: stretch; gap: 6px; max-height: 0; opacity: 0; overflow: hidden; margin: 0; transition: max-height .3s ease, opacity .3s ease, margin .3s ease; }
+    .mir-toast { flex: 1; background: #1a3a1a; border: 1px solid #4f8; border-radius: 4px; padding: 8px 10px; font-size: 11px; color: #8f8; display: flex; align-items: center; min-height: 32px; }
+
     .footer { padding: 8px 16px; text-align: center; border-top: 1px solid #333; font-size: 10px; color: #666; }
     .footer a { color: #4f8; text-decoration: none; }
   </style>
 </head>
-<body>
+<body class="pre-open">
   <div class="header">
-    <h1>🛡 TT Chat Unblock</h1>
-    <div class="ver" id="verLabel"><span class="ver-dot-inline ok" id="verDot"></span> v2.6 — Stable</div>
-    <div class="dot-row">
-      <div class="dot" id="dot"></div>
-      <span id="sText">Active</span>
+    <div class="header-inner">
+      <h1>🛡 TT Chat Unblock</h1>
+      <div class="ver" id="verLabel"><span class="ver-dot-inline ok" id="verDot"></span> v2.9 — Stable</div>
+      <div class="dot-row">
+        <div class="dot" id="dot"></div>
+        <span id="sText">Active</span>
+      </div>
     </div>
   </div>
 
-  <div class="content" id="mainContent" style="display:none">
+  <div class="content" id="mainContent">
     <!-- 开关 -->
     <div class="setting">
       <div class="setting-label">
@@ -101,9 +214,23 @@
     <div class="setting">
       <div class="setting-label">
         <span class="t" id="lblVer">Version Tag</span>
-        <span class="d" id="dVer">Show " | v2.6" in decoded messages</span>
+        <span class="d" id="dVer">Show " | v2.9" in decoded messages</span>
       </div>
       <label class="toggle"><input type="checkbox" id="tglVer"><span class="s"></span></label>
+    </div>
+
+    <div class="setting">
+      <div class="setting-label">
+        <span class="t" id="lblMir">Mirror Site</span>
+        <span class="d" id="dMir">Run extension on cdn. and beta. prefixed sites</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tglMir"><span class="s"></span></label>
+    </div>
+    <div class="mir-row" id="mirRow" style="display:none;">
+      <div class="mir-toast" id="mirToast">
+        <span id="mirToastText"></span>
+      </div>
+      <button class="btn-action btn-action--refresh" id="mirToastBtn">Refresh</button>
     </div>
 
     <!-- 格式选择 -->
@@ -112,11 +239,14 @@
         <span class="t" id="lblFmt">Message Format</span>
         <span class="d" id="dFmt">V2.x is recommended</span>
       </div>
-      <div class="lang-anim" id="fmtWrap">
-        <select class="lang-select" id="fmtSel" style="width:auto;padding:3px 6px;margin:0;font-size:11px;">
-          <option value="v2">V2.x (~XXXX)</option>
-          <option value="v1">V1.2 (\uXXXX)</option>
-        </select>
+      <div class="dropdown dropdown--overlay dropdown--compact" id="fmtDD">
+        <button class="drop-btn" id="fmtBtn" type="button"><span id="fmtText">V2.x (~XXXX)</span><span class="drop-arrow">▾</span></button>
+        <div class="drop-menu" id="fmtMenu">
+          <div class="drop-menu-inner">
+            <div class="drop-item" data-val="v2">V2.x (~XXXX)</div>
+            <div class="drop-item" data-val="v1">V1.2 (\uXXXX)</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -132,36 +262,40 @@
         <span class="t" id="lblLang">Page Language</span>
       </div>
     </div>
-    <div class="lang-anim" id="langWrap">
-      <select class="lang-select" id="langSel">
-        <option value="en">English</option>
-        <option value="zh">中文 (Chinese)</option>
-        <option value="ja">日本語 (Japanese)</option>
-        <option value="ko">한국어 (Korean)</option>
-        <option value="ru">Русский (Russian)</option>
-        <option value="ar">العربية (Arabic)</option>
-        <option value="fr">Français (French)</option>
-        <option value="es">Español (Spanish)</option>
-        <option value="de">Deutsch (German)</option>
-        <option value="pt">Português (Portuguese)</option>
-      </select>
+    <div class="dropdown dropdown--overlay dropdown--lang" id="langDD">
+      <button class="drop-btn" id="langBtn" type="button"><span id="langText">English</span><span class="drop-arrow">▾</span></button>
+      <div class="drop-menu" id="langMenu">
+        <div class="drop-menu-inner">
+          <div class="drop-item" data-val="en">English</div>
+          <div class="drop-item" data-val="zh">中文 (Chinese)</div>
+          <div class="drop-item" data-val="ja">日本語 (Japanese)</div>
+          <div class="drop-item" data-val="ko">한국어 (Korean)</div>
+          <div class="drop-item" data-val="ru">Русский (Russian)</div>
+          <div class="drop-item" data-val="ar">العربية (Arabic)</div>
+          <div class="drop-item" data-val="fr">Français (French)</div>
+          <div class="drop-item" data-val="es">Español (Spanish)</div>
+          <div class="drop-item" data-val="de">Deutsch (German)</div>
+          <div class="drop-item" data-val="pt">Português (Portuguese)</div>
+        </div>
+      </div>
     </div>
 
     <!-- 各语言对应链接 + 复制 -->
     <div class="copy-row">
       <input type="text" id="linkInput" readonly>
-      <button id="copyBtn">Copy</button>
+      <button class="btn-action btn-action--copy" id="copyBtn">Copy</button>
     </div>
 
     <!-- 重置按钮 -->
     <div class="btn-row">
-      <button id="resetBtn">Reset Chat Input & Copy</button>
+      <button class="btn-action btn-action--reset" id="resetBtn">Reset Chat Input & Copy</button>
     </div>
 
     <!-- 版本检测 -->
 
   <div class="footer">
     <span id="footerText">Made by L_Shy_P</span>
+  </div>
   </div>
 
   <script src="popup.js"></script>

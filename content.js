@@ -1,29 +1,55 @@
-// TT Chat Unblock — MAIN world (V2.6)
+// TT Chat Unblock — MAIN world (V2.9)
 (function () {
   "use strict";
 
-  var VERSION = "2.6";
+  // 镜像网站开关：关闭时跳过所有功能
+  if (location.hostname === "cdn.tanktrouble.com" || location.hostname === "beta.tanktrouble.com") {
+    var _mirCheck = null;
+    try { _mirCheck = localStorage.getItem("tt-mir"); } catch (e) {}
+    if (_mirCheck === "0") {
+      console.log("[TT] mirror site disabled, skipping all hooks");
+      return;
+    }
+  }
+
+  var VERSION = "2.9";
   var V2_VER = " | v" + VERSION;
   var V2_SIG = V2_VER + " [Chat Unblocker]";
   var V1_SIG = " [Chat Unblocker]";
 
-  var settings = { sig: true, enc: true, fmt: "v2", lang: "en", ver: true };
+  var settings = { sig: true, enc: true, fmt: "v2", lang: null, ver: true, mir: true };
+  // 同步读取语言，避免异步 init 消息延迟导致显示英文
+  try { settings.lang = localStorage.getItem("tt-lang"); } catch (e) {}
+  if (!settings.lang) settings.lang = "en";
   var _lastToggle = 0;
   var _lastSentText = "";
   var _isSending = false;
   var _sendQueue = [];
 
   var MSG_NO_RECIPIENTS = {
-    en: "No valid recipients — message not sent",
-    zh: "无有效收件人 — 消息未发送",
-    ja: "有効な受信者がいません — 送信取消",
-    ko: "유효한 수신자가 없습니다 — 전송 취소",
-    ru: "Нет получателей — не отправлено",
-    ar: "لا يوجد مستلمون صالحون — لم يتم الإرسال",
-    fr: "Aucun destinataire — non envoyé",
-    es: "Sin destinatarios válidos — no enviado",
-    de: "Keine gültigen Empfänger — nicht gesendet",
-    pt: "Sem destinatários — não enviado"
+    en: "User not found",
+    zh: "用户不存在",
+    ja: "ユーザーが見つかりません",
+    ko: "사용자를 찾을 수 없습니다",
+    ru: "Пользователь не найден",
+    ar: "المستخدم غير موجود",
+    fr: "Utilisateur introuvable",
+    es: "Usuario no encontrado",
+    de: "Benutzer nicht gefunden",
+    pt: "Usuário não encontrado"
+  };
+
+  var MSG_SELF = {
+    en: "Why talk to yourself?",
+    zh: "你为什么要自言自语？",
+    ja: "なぜ独り言を？",
+    ko: "왜 혼잣말을 하나요?",
+    ru: "Зачем говорить с собой?",
+    ar: "لماذا تتحدث مع نفسك؟",
+    fr: "Pourquoi te parles-tu à toi-même ?",
+    es: "¿Por qué hablas contigo mismo?",
+    de: "Warum redest du mit dir selbst?",
+    pt: "Por que falar consigo mesmo?"
   };
 
   var V1_LABEL = {
@@ -66,17 +92,26 @@
   };
 
   // ---- bridge 通信 ----
+  // 向 bridge 主动请求一次 init，防止首次 init 因时序问题被错过（新用户关键修复）
+  function requestInit() {
+    try { window.postMessage({ source: "tt-content", data: { type: "request-init" } }, "*"); } catch (e) {}
+  }
   window.addEventListener("message", function (e) {
     if (!e.data || e.data.source !== "tt-bridge") return;
     var d = e.data.data;
-    if (d.type === "init")  { settings.sig = d.sig; settings.enc = d.enc; settings.fmt = d.fmt || "v2"; settings.lang = d.lang; settings.ver = d.ver !== false; console.log("[TT] init sig=" + settings.sig + " enc=" + settings.enc + " fmt=" + settings.fmt + " lang=" + settings.lang + " ver=" + settings.ver); }
+    if (d.type === "init")  { settings.sig = d.sig; settings.enc = d.enc; settings.fmt = d.fmt || "v2"; settings.lang = d.lang; settings.ver = d.ver !== false; settings.mir = d.mir !== false; console.log("[TT] init sig=" + settings.sig + " enc=" + settings.enc + " fmt=" + settings.fmt + " lang=" + settings.lang + " ver=" + settings.ver + " mir=" + settings.mir); }
     if (d.type === "sig")   { settings.sig = d.value; console.log("[TT] sig→" + settings.sig); }
     if (d.type === "enc")   { settings.enc = d.value; console.log("[TT] enc→" + settings.enc); toggleMessages(); }
     if (d.type === "fmt")   { settings.fmt = d.value; console.log("[TT] fmt→" + settings.fmt); }
-    if (d.type === "lang")  { settings.lang = d.value; console.log("[TT] lang→" + settings.lang); }
+    if (d.type === "lang")  { settings.lang = d.value; console.log("[TT] lang→" + settings.lang); toggleMessages(); updateCopyLabels(); }
     if (d.type === "ver")   { settings.ver = d.value; console.log("[TT] ver→" + settings.ver); toggleMessages(); }
+    if (d.type === "mir")   { settings.mir = d.value; console.log("[TT] mir→" + settings.mir); try { localStorage.setItem("tt-mir", d.value ? "1" : "0"); } catch (e) {} }
     if (d.type === "reset") { doReset(); }
   });
+  // 脚本启动即请求 init（bridge 在 document_start 已注册监听，可立即响应）
+  requestInit();
+  // 兜底：延迟再请求一次，覆盖 document_start → document_idle 之间的所有时序
+  setTimeout(requestInit, 300);
 
   // ---- 切换消息显示（编码开关 → 从 _raw 实时解析后重绘） ----
   function toggleMessages() {
@@ -227,12 +262,14 @@
   // ---- 全局CSS：选中样式修复 + 文本换行修复 + 复制按钮样式 ----
   var style = document.createElement("style");
   style.textContent = [
-    "[data-tt-chat-body], [data-tt-chat-body] * { user-select: text !important; -webkit-user-select: text !important; }",
+    "[data-tt-chat-body], [data-tt-chat-body] *:not(.username):not(a) { user-select: text !important; -webkit-user-select: text !important; }",
+    "[data-tt-chat-body] .username, [data-tt-chat-body] a { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }",
     "[data-tt-chat-body] { overflow-x: hidden !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }",
     "[data-tt-chat-body] > div, [data-tt-chat-body] > p, [data-tt-chat-body] > td, [data-tt-chat-body] div > div, [data-tt-chat-body] td > div, [data-tt-chat-body] td > p { word-wrap: break-word !important; overflow-wrap: break-word !important; word-break: break-word !important; white-space: normal !important; max-width: 100% !important; }",
     "[data-tt-chat-body] *::selection { background: #4f8 !important; color: #000 !important; text-shadow: none !important; -webkit-text-stroke: 0px !important; -webkit-text-fill-color: #000 !important; }",
     "[data-tt-chat-body] *::-moz-selection { background: #4f8 !important; color: #000 !important; text-shadow: none !important; }",
     ".tt-copy-icon { transition: left 0.2s cubic-bezier(0.1,0.9,0.2,1.0), top 0.2s cubic-bezier(0.1,0.9,0.2,1.0), opacity 0.18s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }",
+    ".tt-copy-icon::before { content:'';position:absolute;left:-8px;top:0;bottom:0;width:8px; }",
     ".tt-copy-icon:hover { background:rgba(255,255,255,0.97) !important; box-shadow:0 2px 8px rgba(0,0,0,0.18) !important; }",
     ".tt-copy-menu { transition: left 0.2s cubic-bezier(0.1,0.9,0.2,1.0), top 0.2s cubic-bezier(0.1,0.9,0.2,1.0), opacity 0.18s ease; }"
   ].join("\n");
@@ -255,22 +292,27 @@
   var _resizing = false;
 
   var COPY_LABELS = {
-    en: { icon: "\uD83D\uDCCB", copyText: "Copy text", copyName: "Copy name", copyFull: "Copy all", copied: "✓", title: "Copy" },
-    zh: { icon: "\uD83D\uDCCB", copyText: "复制内容", copyName: "复制名字", copyFull: "复制整条", copied: "✓", title: "复制" },
-    ja: { icon: "\uD83D\uDCCB", copyText: "本文コピー", copyName: "名前コピー", copyFull: "全てコピー", copied: "✓", title: "コピー" },
-    ko: { icon: "\uD83D\uDCCB", copyText: "내용 복사", copyName: "이름 복사", copyFull: "전체 복사", copied: "✓", title: "복사" },
-    ru: { icon: "\uD83D\uDCCB", copyText: "Копия текста", copyName: "Копия имени", copyFull: "Копия всего", copied: "✓", title: "Копия" },
-    ar: { icon: "\uD83D\uDCCB", copyText: "نسخ النص", copyName: "نسخ الاسم", copyFull: "نسخ الكل", copied: "✓", title: "نسخ" },
-    fr: { icon: "\uD83D\uDCCB", copyText: "Copier texte", copyName: "Copier nom", copyFull: "Tout copier", copied: "✓", title: "Copier" },
-    es: { icon: "\uD83D\uDCCB", copyText: "Copiar texto", copyName: "Copiar nombre", copyFull: "Copiar todo", copied: "✓", title: "Copiar" },
-    de: { icon: "\uD83D\uDCCB", copyText: "Text kopieren", copyName: "Name kopieren", copyFull: "Alles kopieren", copied: "✓", title: "Kopieren" },
-    pt: { icon: "\uD83D\uDCCB", copyText: "Copiar texto", copyName: "Copiar nome", copyFull: "Copiar tudo", copied: "✓", title: "Copiar" }
+    en: { icon: "\uD83D\uDCCB", copyText: "Copy text", copyName: "Copy name", copyFull: "Copy all", copied: "✓", title: "Copy message" },
+    zh: { icon: "\uD83D\uDCCB", copyText: "复制内容", copyName: "复制名字", copyFull: "复制整条", copied: "✓", title: "复制消息内容" },
+    ja: { icon: "\uD83D\uDCCB", copyText: "本文コピー", copyName: "名前コピー", copyFull: "全てコピー", copied: "✓", title: "メッセージをコピー" },
+    ko: { icon: "\uD83D\uDCCB", copyText: "내용 복사", copyName: "이름 복사", copyFull: "전체 복사", copied: "✓", title: "메시지 복사" },
+    ru: { icon: "\uD83D\uDCCB", copyText: "Копия текста", copyName: "Копия имени", copyFull: "Копия всего", copied: "✓", title: "Копировать сообщение" },
+    ar: { icon: "\uD83D\uDCCB", copyText: "نسخ النص", copyName: "نسخ الاسم", copyFull: "نسخ الكل", copied: "✓", title: "نسخ الرسالة" },
+    fr: { icon: "\uD83D\uDCCB", copyText: "Copier texte", copyName: "Copier nom", copyFull: "Tout copier", copied: "✓", title: "Copier le message" },
+    es: { icon: "\uD83D\uDCCB", copyText: "Copiar texto", copyName: "Copiar nombre", copyFull: "Copiar todo", copied: "✓", title: "Copiar mensaje" },
+    de: { icon: "\uD83D\uDCCB", copyText: "Text kopieren", copyName: "Name kopieren", copyFull: "Alles kopieren", copied: "✓", title: "Nachricht kopieren" },
+    pt: { icon: "\uD83D\uDCCB", copyText: "Copiar texto", copyName: "Copiar nome", copyFull: "Copiar tudo", copied: "✓", title: "Copiar mensagem" }
   };
 
   function _L(key) {
     var lang = settings.lang || "en";
     var map = COPY_LABELS[lang] || COPY_LABELS["en"];
     return map[key];
+  }
+
+  function updateCopyLabels() {
+    if (_iconEl) { _iconEl.textContent = _L("icon"); _iconEl.title = _L("title"); }
+    // 菜单项在下一次 showMenu() 时会自动重建，无需额外处理
   }
 
   function ensureChatMarked() {
@@ -341,7 +383,7 @@
       _iconEl.textContent = _L("icon");
       _iconEl.title = _L("title");
       _iconEl.addEventListener("mouseenter", function () { clearTimeout(_hideTimer); showMenu(); });
-      _iconEl.addEventListener("mouseleave", function () { if (!_menuEl || _menuEl.style.opacity === "0") scheduleHide(); });
+      _iconEl.addEventListener("mouseleave", function (e) { if (!e.relatedTarget || !(_menuEl && _menuEl.contains(e.relatedTarget))) closeMenu(); if (!e.relatedTarget || !getChat() || !getChat().contains(e.relatedTarget)) scheduleHideFast(); });
       _iconEl.addEventListener("click", function (ev) { ev.stopPropagation(); copyRowText(); });
       document.body.appendChild(_iconEl);
       return _iconEl;
@@ -353,7 +395,7 @@
       _menuEl.className = "tt-copy-menu";
       _menuEl.style.cssText = "position:fixed;z-index:99999;opacity:0;pointer-events:none;border-radius:6px;background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.1);box-shadow:0 4px 16px rgba(0,0,0,0.14);padding:4px 0;min-width:140px;font-size:12px;color:#333;";
       _menuEl.addEventListener("mouseenter", function () { clearTimeout(_hideTimer); });
-      _menuEl.addEventListener("mouseleave", function () { scheduleHide(); });
+      _menuEl.addEventListener("mouseleave", function (e) { if (e.relatedTarget && _iconEl && (_iconEl === e.relatedTarget || _iconEl.contains(e.relatedTarget))) return; closeMenu(); if (!e.relatedTarget || !getChat() || !getChat().contains(e.relatedTarget)) scheduleHideFast(); });
       document.body.appendChild(_menuEl);
       return _menuEl;
     }
@@ -387,7 +429,7 @@
      var users = _currentRow.querySelectorAll(".username");
      for (var i = 0; i < users.length; i++) {
        (function (userEl) {
-         var name = (userEl.textContent || "").trim();
+         var name = (userEl.textContent || "").replace(/:\s*$/, "").trim();
          if (!name) return;
          var uItem = document.createElement("div");
          uItem.className = "tt-copy-item";
@@ -434,6 +476,10 @@
     _pendingRow = null;
   }
 
+  function closeMenu() {
+    if (_menuEl) { _menuEl.style.opacity = "0"; _menuEl.style.pointerEvents = "none"; }
+  }
+
   function escapeHTML(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
   function isIconOrMenu(el) {
@@ -443,6 +489,7 @@
 
   function showIcon(row) {
     var icon = getOrCreateIcon();
+    icon.title = _L("title");
     var rect = row.getBoundingClientRect();
     var top = rect.top + rect.height / 2 - 12;
     if (top < 4) top = 4;
@@ -456,10 +503,12 @@
     _currentRow = row;
   }
 
-  function scheduleHide() {
+  function scheduleHide(delay) {
     clearTimeout(_hideTimer);
-    _hideTimer = setTimeout(hideAll, 400);
+    _hideTimer = setTimeout(hideAll, delay || 400);
   }
+
+  function scheduleHideFast() { scheduleHide(500); }
 
   function copyRowText() {
     var row = _currentRow;
@@ -503,7 +552,7 @@
     } else if (type === "full") {
       txt = (row.textContent || "").trim();
     } else {
-      txt = name || "";
+      txt = (name || "").replace(/:\s*$/, "").trim();
     }
     if (!txt) return;
     try {
@@ -593,8 +642,8 @@
     if (!el || el.nodeType !== 1) return;
     if (isIconOrMenu(el)) {
       var rel = e.relatedTarget;
-      if (rel && isIconOrMenu(rel)) return;
-      scheduleHide();
+      if (rel && chat && chat.contains(rel)) return;
+      scheduleHideFast();
       return;
     }
     var chat = getChat();
@@ -672,12 +721,17 @@
         }
         var usernames = this.recipientUsernames.slice();
 
-        resolveRecipients(CB, usernames, function (ok) {
+        resolveRecipients(CB, usernames, function (ok, notFound) {
           if (ok) {
             self._sendChat(text);
           } else {
             var lang = settings.lang || "en";
-            var msg = MSG_NO_RECIPIENTS[lang] || MSG_NO_RECIPIENTS["en"];
+            var isSelf = (notFound && notFound.length === 0);
+            var msg = isSelf
+              ? (MSG_SELF[lang] || MSG_SELF["en"])
+              : (MSG_NO_RECIPIENTS[lang] || MSG_NO_RECIPIENTS["en"]);
+            var bubbleColor = isSelf ? "#f0c040" : "#e53935";
+            var arrowColor = isSelf ? "#f0c040" : "#e53935";
             $(".tt-err-bubble").remove();
             var off = self.chatInput.offset();
             var h = self.chatInput.outerHeight();
@@ -685,11 +739,12 @@
             var arrow = $("<span>").css({
               position:"absolute",left:"-6px",top:"50%",transform:"translateY(-50%)",
               width:"0",height:"0",borderTop:"5px solid transparent",
-              borderBottom:"5px solid transparent",borderRight:"6px solid #e53935"
+              borderBottom:"5px solid transparent",borderRight:"6px solid " + arrowColor
             });
             var bubble = $("<span class='tt-err-bubble'>").text(msg).css({
               position:"fixed",zIndex:"9999",left:(off.left+w+8)+"px",top:(off.top+h/2)+"px",
-              transform:"translateY(-50%)",color:"#fff",background:"#e53935",
+              transform:"translateY(-50%)",color: isSelf ? "#333" : "#fff",
+              background:bubbleColor,
               padding:"4px 10px",borderRadius:"4px",fontSize:"12px",fontWeight:"bold",
               whiteSpace:"nowrap",boxShadow:"0 2px 6px rgba(0,0,0,.3)"
             });
@@ -798,6 +853,9 @@
         if (decoded) {
           if (prevLen < CB.messages.length) {
             storeRaw(raw);
+          } else {
+            // 消息可能被异步添加（首条消息/动画/批量场景），延迟重试确保 _raw 落位
+            setTimeout(function () { storeRaw(raw); }, 50);
           }
         }
         return result;
@@ -830,6 +888,9 @@
       if (decoded) {
         if (prevLen < CB.messages.length) {
           storeRaw(raw);
+        } else {
+          // 与 mkDec 同步：异步添加时延迟重试
+          setTimeout(function () { storeRaw(raw); }, 50);
         }
       }
       return result;
@@ -843,5 +904,10 @@
   }
 
   var n = 0;
-  (function go() { n++; if (hook()) return; if (n < 30) setTimeout(go, 200); else console.warn("[TT] ChatBox not found"); })();
+  (function go() {
+    n++;
+    if (hook()) return;
+    if (n < 30) setTimeout(go, 200);
+    else console.warn("[TT] ChatBox not found");
+  })();
 })();

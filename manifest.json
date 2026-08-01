@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TankTrouble Chat Unblock",
-  "version": "2.6",
+  "version": "2.9",
   "description": "Unlock multi-language chat in TankTrouble.com — 中文 / 日本語 / 한국어 / العربية / emoji & more",
   "homepage_url": "https://github.com/L-Shy-P/TankTrouble-Chat-Unblock",
   "icons": {
@@ -9,12 +9,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://tanktrouble.com/*"],
+      "matches": ["*://tanktrouble.com/*", "*://*.tanktrouble.com/*"],
       "js": ["bridge.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     },
     {
-      "matches": ["*://tanktrouble.com/*"],
+      "matches": ["*://tanktrouble.com/*", "*://*.tanktrouble.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle",
       "world": "MAIN",
@@ -26,5 +26,5 @@
     "default_icon": "icon.png",
     "default_title": "TankTrouble Chat Unblock"
   },
-  "permissions": ["storage"]
+  "permissions": ["storage", "tabs"]
 }
