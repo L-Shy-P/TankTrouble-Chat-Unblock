@@ -60,7 +60,7 @@ A: They need the extension too. Only extension users see decoded text; non-users
 A: Click it for details. Usually corrupted files or wrong path. Re-download and redo the install steps.
 
 **Q9: How do I report a bug?**
-A: 1) Press F12 to open DevTools. 2) Go to Console tab. 3) Look for logs prefixed with `[TT]` or red errors. 4) Right-click → "Save as..." to export, or take a screenshot. 5) Open an issue at [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) with the log + description.
+A: 1) Open DevTools (any way: right-click the page → "Inspect"; or ⋮ → More tools → Developer tools; or press F12). 2) Go to Console tab. 3) Look for logs prefixed with `[TT]` or red errors. 4) Right-click → "Save as..." to export, or take a screenshot. 5) Open an issue at [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) with the log + description.
 
 ---
 
@@ -105,7 +105,7 @@ A: 1) Press F12 to open DevTools. 2) Go to Console tab. 3) Look for logs prefixe
 答：点击错误图标查看详情。通常是文件损坏或路径错误。重新下载仓库，按安装步骤重做。
 
 **Q9：怎么汇报问题？**
-答：1) 按 F12 打开开发者工具。2) 切到 Console（控制台）标签。3) 找带 `[TT]` 前缀的日志或红色错误。4) 右键 →「Save as...」导出日志，或截图。5) 去 [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) 提交，附上日志和问题描述。
+答：1) 打开开发者工具（任选一种：右键页面点「检查」；或 ⋮ →「更多工具」→「开发者工具」；或按 F12）。2) 切到 Console（控制台）标签。3) 找带 `[TT]` 前缀的日志或红色错误。4) 右键 →「Save as...」导出日志，或截图。5) 去 [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) 提交，附上日志和问题描述。
 
 ---
 
@@ -150,7 +150,7 @@ A: 相手も拡張が必要。拡張ユーザーのみデコード表示、未�
 A: クリックして詳細確認。通常はファイル破損かパス違い。再ダウンロードして手順通りに再インストール。
 
 **Q9: バグを報告するには？**
-A: 1) F12 で DevTools を開く。2) Console タブへ。3) `[TT]` プレフィックスのログまたは赤いエラーを探す。4) 右クリック →「Save as...」でエクスポート、またはスクリーンショット。5) [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) でログ＋説明を投稿。
+A: 1) DevTools を開く（いずれか：ページ右クリック→「検証」；または ⋮ →「その他のツール」→「デベロッパーツール」；または F12）。2) Console タブへ。3) `[TT]` プレフィックスのログまたは赤いエラーを探す。4) 右クリック →「Save as...」でエクスポート、またはスクリーンショット。5) [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) でログ＋説明を投稿。
 
 ---
 
@@ -195,7 +195,7 @@ A: 상대도 확장 필요. 확장 사용자만 디코딩, 미사용자는 원�
 A: 클릭해 상세 확인. 보통 파일 손상/경로 오류. 재다운로드 후 재설치.
 
 **Q9: 버그 신고는?**
-A: 1) F12로 DevTools 열기. 2) Console 탭으로. 3) `[TT]` 접두 로그나 빨간 에러 찾기. 4) 우클릭 → "Save as..." 내보내기 또는 스크린샷. 5) [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues)에 로그+설명 제출.
+A: 1) DevTools 열기 (아무거나: 페이지 우클릭 → "검사"；또는 ⋮ →「더보기 도구」→「개발자 도구」；또는 F12). 2) Console 탭으로. 3) `[TT]` 접두 로그나 빨간 에러 찾기. 4) 우클릭 → "Save as..." 내보내기 또는 스크린샷. 5) [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues)에 로그+설명 제출.
 
 ---
 
@@ -240,7 +240,7 @@ A: Им тоже нужно расширение. Только пользова�
 A: Кликните для деталей. Обычно файл повреждён или путь неверный. Скачайте заново и переустановите.
 
 **Q9: Как сообщить об ошибке?**
-A: 1) F12 → DevTools. 2) Вкладка Console. 3) Ищите логи с `[TT]` или красные ошибки. 4) ПКМ → "Save as..." экспорт или скриншот. 5) Откройте issue на [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) с логом и описанием.
+A: 1) Откройте DevTools (любой способ: ПКМ по странице → "Посмотреть код"；или ⋮ → "Дополнительные инструменты" → "Инструменты разработчика"；или F12). 2) Вкладка Console. 3) Ищите логи с `[TT]` или красные ошибки. 4) ПКМ → "Save as..." экспорт или скриншот. 5) Откройте issue на [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) с логом и описанием.
 
 ---
 
@@ -285,7 +285,7 @@ A: يحتاجون الإضافة أيضًا. فقط مستخدمو الإضاف�
 A: انقر للتفاصيل. عادة ملف تالف أو مسار خاطئ. أعد التحميل والتثبيت.
 
 **Q9: كيف أبلغ عن خطأ؟**
-A: 1) F12 لفتح DevTools. 2) تبويب Console. 3) ابحث عن سجلات `[TT]` أو أخطاء حمراء. 4) زر أيمن → "Save as..." أو لقطة شاشة. 5) افتح issue في [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) مع السجل والوصف.
+A: 1) افتح DevTools (أي طريقة: نقر أيمن على الصفحة → "فحص"؛ أو ⋮ → "المزيد من الأدوات" → "أدوات المطور"؛ أو F12). 2) تبويب Console. 3) ابحث عن سجلات `[TT]` أو أخطاء حمراء. 4) زر أيمن → "Save as..." أو لقطة شاشة. 5) افتح issue في [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) مع السجل والوصف.
 
 ---
 
@@ -330,7 +330,7 @@ A: Ils ont aussi besoin de l'extension. Seuls les utilisateurs voient le texte d
 A: Cliquez pour les détails. Souvent fichiers corrompus ou mauvais chemin. Retéléchargez et réinstallez.
 
 **Q9: Comment signaler un bug ?**
-A: 1) F12 → DevTools. 2) Onglet Console. 3) Cherchez les logs `[TT]` ou erreurs rouges. 4) Clic droit → "Save as..." ou capture d'écran. 5) Ouvrez un issue sur [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) avec le log et la description.
+A: 1) Ouvrez DevTools (au choix : clic droit sur la page → "Inspecter" ; ou ⋮ → Plus d'outils → Outils de développement ; ou F12). 2) Onglet Console. 3) Cherchez les logs `[TT]` ou erreurs rouges. 4) Clic droit → "Save as..." ou capture d'écran. 5) Ouvrez un issue sur [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) avec le log et la description.
 
 ---
 
@@ -375,7 +375,7 @@ A: Necesitan la extensión también. Solo los usuarios ven el texto decodificado
 A: Haz clic para detalles. Suele ser archivo corrupto o ruta incorrecta. Redescarga y reinstala.
 
 **Q9: ¿Cómo reportar un bug?**
-A: 1) F12 → DevTools. 2) Pestaña Console. 3) Busca logs `[TT]` o errores rojos. 4) Clic derecho → "Save as..." o captura de pantalla. 5) Abre un issue en [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) con el log y la descripción.
+A: 1) Abre DevTools (cualquiera: clic derecho en la página → "Inspeccionar" ; o ⋮ → Más herramientas → Herramientas para desarrolladores ; o F12). 2) Pestaña Console. 3) Busca logs `[TT]` o errores rojos. 4) Clic derecho → "Save as..." o captura de pantalla. 5) Abre un issue en [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) con el log y la descripción.
 
 ---
 
@@ -420,7 +420,7 @@ A: Sie brauchen die Erweiterung auch. Nur Nutzer sehen dekodierten Text; andere 
 A: Klicken für Details. Meist beschädigte Dateien oder falscher Pfad. Neu herunterladen und installieren.
 
 **Q9: Wie melde ich einen Bug?**
-A: 1) F12 → DevTools. 2) Console-Tab. 3) Suchen Sie nach `[TT]`-Logs oder roten Fehlern. 4) Rechtsklick → "Save as..." oder Screenshot. 5) Issue auf [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) mit Log und Beschreibung öffnen.
+A: 1) DevTools öffnen (eines von: Rechtsklick auf die Seite → "Untersuchen" ; oder ⋮ → Weitere Tools → Entwicklertools ; oder F12). 2) Console-Tab. 3) Suchen Sie nach `[TT]`-Logs oder roten Fehlern. 4) Rechtsklick → "Save as..." oder Screenshot. 5) Issue auf [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) mit Log und Beschreibung öffnen.
 
 ---
 
@@ -465,7 +465,7 @@ A: Eles também precisam da extensão. Só usuários veem texto decodificado; ou
 A: Clique para detalhes. Geralmente arquivo corrompido ou caminho errado. Baixe novamente e reinstale.
 
 **Q9: Como reportar um bug?**
-A: 1) F12 → DevTools. 2) Aba Console. 3) Procure logs `[TT]` ou erros vermelhos. 4) Botão direito → "Save as..." ou captura de tela. 5) Abra uma issue no [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) com o log e a descrição.
+A: 1) Abra DevTools (qualquer um: botão direito na página → "Inspecionar" ; ou ⋮ → Mais ferramentas → Ferramentas de desenvolvedor ; ou F12). 2) Aba Console. 3) Procure logs `[TT]` ou erros vermelhos. 4) Botão direito → "Save as..." ou captura de tela. 5) Abra uma issue no [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) com o log e a descrição.
 
 ---
 
