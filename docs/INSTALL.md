@@ -23,8 +23,10 @@
 
 ### 📥 Install
 1. Download or clone this repo
-2. Open `chrome://extensions/` in Chrome/Edge
-3. Enable **Developer mode** (top right)
+2. Open the extensions page (either way):
+   - Type `chrome://extensions/` in the address bar → Enter
+   - Or click ⋮ (top right) → Extensions → Manage Extensions
+3. Turn on the **Developer mode** toggle (top right of the page)
 4. Click **Load unpacked** → select the extension folder
 5. Go to [tanktrouble.com](https://tanktrouble.com) and chat in any language!
 
@@ -66,9 +68,11 @@ A: 1) Press F12 to open DevTools. 2) Go to Console tab. 3) Look for logs prefixe
 
 ### 📥 安装
 1. 下载或克隆此仓库
-2. 打开 `chrome://extensions/`
-3. 开启「开发者模式」→「加载已解压的扩展程序」
-4. 选择扩展文件夹
+2. 打开扩展管理页（任选一种）：
+   - 地址栏输入 `chrome://extensions/` 回车
+   - 或点浏览器右上角 ⋮ →「扩展程序」→「管理扩展程序」
+3. 开启页面右上角的「开发者模式」开关
+4. 点「加载已解压的扩展程序」→ 选择扩展文件夹
 5. 去 [tanktrouble.com](https://tanktrouble.com) 即可用中文聊天
 
 ### 🔄 更新（无需重新下载）
@@ -109,8 +113,10 @@ A: 1) Press F12 to open DevTools. 2) Go to Console tab. 3) Look for logs prefixe
 
 ### 📥 インストール
 1. リポジトリをダウンロードまたはクローン
-2. `chrome://extensions/` を開く
-3. **デベロッパーモード** を有効化
+2. 拡張機能ページを開く（どちらか）：
+   - アドレスバーに `chrome://extensions/` 入力 → Enter
+   - または右上の ⋮ →「拡張機能」→「拡張機能の管理」
+3. ページ右上の**デベロッパーモード**をオン
 4. **パッケージ化されていない拡張機能を読み込む** → フォルダを選択
 5. [tanktrouble.com](https://tanktrouble.com) で多言語チャット！
 
@@ -152,8 +158,10 @@ A: 1) F12 で DevTools を開く。2) Console タブへ。3) `[TT]` プレフィ
 
 ### 📥 설치
 1. 저장소 다운로드 또는 클론
-2. `chrome://extensions/` 열기
-3. **개발자 모드** 활성화
+2. 확장 프로그램 페이지 열기 (둘 중 하나):
+   - 주소창에 `chrome://extensions/` 입력 → Enter
+   - 또는 우상단 ⋮ →「확장 프로그램」→「확장 프로그램 관리」
+3. 페이지 우상단의 **개발자 모드** 스위치 켜기
 4. **압축 해제된 프로그램 로드** → 폴더 선택
 5. [tanktrouble.com](https://tanktrouble.com)에서 다국어 채팅!
 
@@ -195,8 +203,10 @@ A: 1) F12로 DevTools 열기. 2) Console 탭으로. 3) `[TT]` 접두 로그나 �
 
 ### 📥 Установка
 1. Скачайте или клонируйте репозиторий
-2. Откройте `chrome://extensions/`
-3. Включите **режим разработчика**
+2. Откройте страницу расширений (любой способ):
+   - Введите `chrome://extensions/` в адресной строке → Enter
+   - Или ⋮ (справа сверху) → Расширения → Управление расширениями
+3. Включите **режим разработчика** (справа сверху страницы)
 4. **Загрузить распакованное** → выберите папку
 5. Откройте [tanktrouble.com](https://tanktrouble.com) и общайтесь!
 
@@ -238,8 +248,10 @@ A: 1) F12 → DevTools. 2) Вкладка Console. 3) Ищите логи с `[T
 
 ### 📥 التثبيت
 1. نزّل أو استنسخ المستودع
-2. افتح `chrome://extensions/`
-3. فعّل **وضع المطور**
+2. افتح صفحة الإضافات (أي طريقة):
+   - اكتب `chrome://extensions/` في شريط العناوين → Enter
+   - أو ⋮ (يمين أعلى) → الإضافات → إدارة الإضافات
+3. فعّل **وضع المطور** (يمين أعلى الصفحة)
 4. **تحميل غير مضغوط** → اختر المجلد
 5. افتح [tanktrouble.com](https://tanktrouble.com)!
 
@@ -281,8 +293,10 @@ A: 1) F12 لفتح DevTools. 2) تبويب Console. 3) ابحث عن سجلات 
 
 ### 📥 Installation
 1. Téléchargez ou clonez ce dépôt
-2. Ouvrez `chrome://extensions/`
-3. Activez le **mode développeur**
+2. Ouvrez la page des extensions (au choix) :
+   - Tapez `chrome://extensions/` dans la barre d'adresse → Entrée
+   - Ou ⋮ (en haut à droite) → Extensions → Gérer les extensions
+3. Activez le **mode développeur** (en haut à droite de la page)
 4. **Charger l'extension non empaquetée** → sélectionnez le dossier
 5. Allez sur [tanktrouble.com](https://tanktrouble.com) !
 
@@ -324,8 +338,10 @@ A: 1) F12 → DevTools. 2) Onglet Console. 3) Cherchez les logs `[TT]` ou erreur
 
 ### 📥 Instalación
 1. Descarga o clona este repo
-2. Abre `chrome://extensions/`
-3. Activa el **modo desarrollador**
+2. Abre la página de extensiones (cualquiera):
+   - Escribe `chrome://extensions/` en la barra → Enter
+   - O ⋮ (arriba derecha) → Extensiones → Administrar extensiones
+3. Activa el **modo desarrollador** (arriba derecha de la página)
 4. **Cargar descomprimida** → selecciona la carpeta
 5. ¡Abre [tanktrouble.com](https://tanktrouble.com)!
 
@@ -367,8 +383,10 @@ A: 1) F12 → DevTools. 2) Pestaña Console. 3) Busca logs `[TT]` o errores rojo
 
 ### 📥 Installation
 1. Repo herunterladen oder klonen
-2. `chrome://extensions/` öffnen
-3. **Entwicklermodus** aktivieren
+2. Erweiterungsseite öffnen (eines von beiden):
+   - `chrome://extensions/` in Adressleiste → Enter
+   - Oder ⋮ (oben rechts) → Erweiterungen → Erweiterungen verwalten
+3. **Entwicklermodus** aktivieren (oben rechts auf der Seite)
 4. **Entpackte Erweiterung laden** → Ordner wählen
 5. [tanktrouble.com](https://tanktrouble.com) öffnen!
 
@@ -410,8 +428,10 @@ A: 1) F12 → DevTools. 2) Console-Tab. 3) Suchen Sie nach `[TT]`-Logs oder rote
 
 ### 📥 Instalação
 1. Baixe ou clone este repo
-2. Abra `chrome://extensions/`
-3. Ative o **modo desenvolvedor**
+2. Abra a página de extensões (qualquer uma):
+   - Digite `chrome://extensions/` na barra → Enter
+   - Ou ⋮ (canto superior direito) → Extensões → Gerenciar extensões
+3. Ative o **modo desenvolvedor** (canto superior direito da página)
 4. **Carregar descompactada** → selecione a pasta
 5. Abra [tanktrouble.com](https://tanktrouble.com)!
 

@@ -128,7 +128,7 @@ TankTrouble.com 的聊天系统会拦截非 ASCII 字符——中文、日文、
 - 🎨 **视觉体验优化** — 自定义下拉菜单、操作按钮样式、提示栏动画等整体打磨
 
 ### v2.7 更新内容
-- 🎬 **Drawer-pull panel startup** — title bar fades in (0.55s) while the content block reveals via `clip-path` (1.5s easeOutExpo), creating a "curtain pulling down" effect that's perfectly smooth end-to-end with zero sub-pixel jitter (single GPU-composited property, no layout thrash); header background stays solid opaque ("desk edge"), only inner content fades in; selectors start expanded; switches locked via `init-lock`, released at 1700ms
+- 🎬 **抽屉式面板启动动画** — 标题栏淡入（0.55秒），内容区通过 `clip-path` 展开（1.5秒 easeOutExpo 缓动），营造"拉帘下降"效果，全程丝滑无像素抖动（单 GPU 合成属性，无布局抖动）；标题栏背景保持实色不透明（"桌沿"效果），仅内容淡入；选择器初始展开；开关通过 `init-lock` 锁定，1700毫秒后释放
 - 🌐 **私聊错误优化** — 优化用户不存在时的错误提示描述
 - 🖱️ **复制菜单交互打磨** — 增加500ms鼠标离开延迟；提升鼠标检测按钮范围，整体优化复制按钮交互体验。
 - 🔩 **面板交互优化** — 在面板内，长描述文本不再挤走选择器；复制的链接统一简化为仓库根路径。
