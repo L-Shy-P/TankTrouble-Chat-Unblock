@@ -94,14 +94,89 @@
       border-radius: 4px;
       box-shadow: 0 4px 12px rgba(0,0,0,.4);
     }
-    .dropdown--lang.open .drop-menu-inner { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #555 transparent; }
     .drop-item { padding: 6px 10px; font-size: 12px; color: #e0e0e0; cursor: pointer; transition: background .15s, color .15s; }
     .drop-item:hover { background: #3a3a5a; color: #4f8; }
     .drop-item.active { color: #4f8; background: #2f2f4a; }
 
-    /* 语言下拉：略紧凑，动画与格式下拉一致（向下覆盖） */
-    .dropdown--lang { margin-bottom: 8px; }
-    .dropdown--lang .drop-item { padding: 5px 8px; font-size: 11px; line-height: 1.35; }
+    /* 语言下拉：轮盘式选择器——列表盖住原按钮；无透明度动画，纯边框伸长（像按钮扩展开） */
+    .dropdown--lang { position: relative; margin-bottom: 8px; }
+    /* 按钮高度与列表项统一为 24px（原默认约 26.8px，会与列表下边缘差 2.8px）；
+       line-height 同步 24px——与列表项同一 strut 路径，消除 DPR 下文字 ~0.4px 竖向亚像素差 */
+    .dropdown--lang .drop-btn { position: relative; z-index: 3; height: 24px; padding: 0 8px; line-height: 24px; box-sizing: border-box; }
+    /* 语言按钮 hover 与模拟按钮（列表当前项）一致：灰底 + 绿字，收起瞬间无缝衔接 */
+    .dropdown--lang .drop-btn:hover { background: #3f3f4f; color: #4f8; }
+    .lang-wheel {
+      position: absolute;
+      left: 0; right: 0;
+      top: 0px;                /* 收起时 = 按钮位置（边框伸长的起点）；展开大小由 JS 动态设置 */
+      height: 24px;
+      z-index: 5;              /* 盖住原按钮：列表覆盖按钮，不再有按钮残留 */
+      border-radius: 4px;
+      background: #2a2a3e;
+      overflow: hidden;
+      opacity: 0;              /* 显示/隐藏由 JS 控制（无透明度过渡，纯伸长动画） */
+      visibility: hidden;
+      pointer-events: none;    /* 显示期间由 JS 设 inline auto（含收起动画期间，hover 链不断） */
+      transition: top .38s cubic-bezier(0.16,1,0.3,1), height .38s cubic-bezier(0.16,1,0.3,1);
+    }
+    /* 外框（1px 内描边）用 ::after 绘制：伪元素树序在 .lang-items 之后，画在行背景之上
+       （行不会盖住边框）；不占布局（无 border），当前项行精确落在按钮行 */
+    .lang-wheel::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 1px #444;
+      pointer-events: none;
+      transition: box-shadow .2s ease;
+    }
+    /* 边框只有一个 = 列表外框（按钮边框的延伸）。
+       变绿条件与按钮一致：仅当鼠标在按钮行（当前语言项）上时外框变绿，移开列表其他区域变灰 */
+    .dropdown--lang:has(.drop-item.active:hover) .lang-wheel::after { box-shadow: inset 0 0 0 1px #4f8; }
+    /* 展开动画期间 JS 强制绿（衔接按钮 hover），结束后移除交给 :has 规则 */
+    .lang-wheel.frame-green::after { box-shadow: inset 0 0 0 1px #4f8; }
+    .lang-items {
+      position: absolute;
+      left: 0; right: 0;
+      top: 0px;               /* wheel 无布局边框，当前项行直接 = 按钮行（JS 动态调整同基准） */
+      will-change: transform;
+      transition: top .38s cubic-bezier(0.16,1,0.3,1);   /* 与窗口伸长同步 */
+    }
+    .lang-items .drop-item {
+      height: 24px;
+      padding: 0 10px;
+      font-size: 11px;
+      line-height: 24px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    /* 任意语言项 hover：背景变灰，文字不变 */
+    .lang-items .drop-item:hover { background: #3f3f4f; color: #e0e0e0; }
+    /* 当前语言（模拟按钮）：列表里的一项，复刻按钮内容——12px 文字 + ▾ 箭头 + flex 居中，
+       无独立边框（边框就是列表外框，收起时收缩为按钮边框，位置重合无缝）；点击收起 */
+    .lang-items .drop-item.active {
+      background: #2a2a3e;
+      color: #e0e0e0;
+      font-size: 12px;
+      padding: 0 8px;                  /* 与按钮 padding 一致 */
+      display: flex;
+      align-items: center;             /* 与按钮相同垂直居中 */
+      justify-content: space-between;  /* 文字左、箭头右，与按钮布局一致 */
+    }
+    /* 与按钮同款下拉箭头：收起交接瞬间箭头不突现/消失 */
+    .lang-items .drop-item.active::after {
+      content: "▾";
+      font-size: 10px;
+      color: #888;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+    /* hover 当前语言（= 按钮行）：灰底 + 绿字，与按钮 hover 一致；列表外框同步变绿（上方 :has 规则） */
+    .lang-items .drop-item.active:hover { background: #3f3f4f; color: #4f8; }
 
     /* 操作按钮：默认微染色底 + 彩色边框/文字，悬停加深并发光 */
     .btn-action {
@@ -185,7 +260,7 @@
   <div class="header">
     <div class="header-inner">
       <h1>🛡 TT Chat Unblock</h1>
-      <div class="ver" id="verLabel"><span class="ver-dot-inline ok" id="verDot"></span> v2.9 — Stable</div>
+      <div class="ver" id="verLabel"><span class="ver-dot-inline ok" id="verDot"></span> v2.10 — Stable</div>
       <div class="dot-row">
         <div class="dot" id="dot"></div>
         <span id="sText">Active</span>
@@ -214,7 +289,7 @@
     <div class="setting">
       <div class="setting-label">
         <span class="t" id="lblVer">Version Tag</span>
-        <span class="d" id="dVer">Show " | v2.9" in decoded messages</span>
+        <span class="d" id="dVer">Show " | v2.10" in decoded messages</span>
       </div>
       <label class="toggle"><input type="checkbox" id="tglVer"><span class="s"></span></label>
     </div>
@@ -263,9 +338,8 @@
       </div>
     </div>
     <div class="dropdown dropdown--overlay dropdown--lang" id="langDD">
-      <button class="drop-btn" id="langBtn" type="button"><span id="langText">English</span><span class="drop-arrow">▾</span></button>
-      <div class="drop-menu" id="langMenu">
-        <div class="drop-menu-inner">
+      <div class="lang-wheel" id="langWheel">
+        <div class="lang-items" id="langItems">
           <div class="drop-item" data-val="en">English</div>
           <div class="drop-item" data-val="zh">中文 (Chinese)</div>
           <div class="drop-item" data-val="ja">日本語 (Japanese)</div>
@@ -278,6 +352,7 @@
           <div class="drop-item" data-val="pt">Português (Portuguese)</div>
         </div>
       </div>
+      <button class="drop-btn" id="langBtn" type="button"><span id="langText">English</span><span class="drop-arrow">▾</span></button>
     </div>
 
     <!-- 各语言对应链接 + 复制 -->

@@ -32,7 +32,23 @@ TankTrouble.com blocks non-ASCII characters in chat — Chinese, Japanese, Korea
 - 🔐 **XOR scrambling** — avoids browser/network sensitive-word filters
 - ⏱ **Timeout recovery** — auto-resets UI when server drops the receipt
 - 🎛 **Popup panel** with language selector (10 languages)
+- 🧲 **Multi-select & batch copy** — check circles, range selection with preview, floating toolbar
 - ✍️ **Signature watermark** — non-extension users see `[Chat Unblocker]` tag
+
+### What's New in v2.10
+- 🧲 **Multi-select & batch copy** — hover a message to reveal a check circle on its left; click to select (green row highlight + left green line, preview↔checked cross-fade). In batch mode, hovering another circle previews the whole range between the last selection and the cursor (soft green), and one click selects the entire range. A floating toolbar offers copy / include-sender-names toggle / batch toggle / clear
+- 🛡 **Left scrollbar avoidance** — the game's custom scrollbar sits on the left of the message list; the check circle + copy button group detects it at runtime and keeps a full circle-width gap so the scrollbar stays fully draggable
+- 🌊 **Silky hover movement** — copy button/circle glide between messages with CSS ease-out; while scrolling the list they smoothly chase the hovered row instead of jittering; persistent checked circles stay frame-synced with their rows
+- 🎡 **Language picker refinement** — wheel-style picker with free scroll + snap (one item per wheel notch), edge fade; switching languages animates row heights so the whole popup flows to the new layout instead of jumping
+- 🧲 **Physics-based floating UI** — checked circles, multi-select toolbar, error bubbles and the sending indicator all follow the chat bar with rAF spring physics (mass/inertia per element) while dragging
+- 🖱️ **Unified hover state machine** — all show/hide/position/menu decisions flow through one `applyHover()` state machine instead of scattered handlers
+- 📤 **Sending queue rework** — all messages (public/Chinese/private) go through one queue; you can keep typing while sending; duplicate adjacent messages are blocked with a yellow toast
+- 🌀 **Sending indicator** — green SVG arc-spin indicator next to the input (no more black box); hover it to see the queue; fixed z-index layering so it is no longer hidden behind the game panel
+- 🐛 **Fade-in via CSS transitions** — jQuery `fadeIn`/`fadeOut` silently fail on the game page (opacity stuck at 0); sending indicator, error toasts and queue bubble now use pure CSS transitions
+- 🧹 **No more striped background** — the game's gray diagonal stripe animation is removed at code level (plus CSS backup)
+- 🎡 **Language wheel picker** — the Page Language selector is now a wheel: the current language stays pinned to the button while the list scrolls around it (free scroll + snap-to-item, one item per wheel notch), click to jump with animation, edge fade; selection applies on exit and the panel layout morphs smoothly
+- 🎞️ **Scroll clip & sync** — checked circles are scroll-synced frame-by-frame via the container's scroll event (no polling lag) and hard-clipped at the list edges by `clip-path` exactly like messages being covered; hover circles / copy buttons no longer appear over invisible rows; dragging the chat bar off-screen no longer piles circles up at the screen edge
+- ⌨️ **Native input behavior** — pressing Enter clears the input and drops the focus (original game behavior); the input is re-enabled after the message is sent, keeping all 4 original ways to exit typing (click blank / click chat button / Esc / Enter on empty input)
 
 ### What's New in v2.9
 - 🌐 **Mirror site expansion** — `beta.tanktrouble.com` now grouped with `cdn.tanktrouble.com` under the Mirror Site toggle; description simplified to "cdn. and beta. prefixed sites"
@@ -114,7 +130,23 @@ TankTrouble.com 的聊天系统会拦截非 ASCII 字符——中文、日文、
 - 🔐 XOR 加扰规避敏感词过滤器
 - ⏱ 超时无应答自动恢复 UI
 - 🎛 多语言弹出面板（10 种语言）
+- 🧲 多选与批量复制（勾选圆圈、范围预览、浮动工具栏）
 - ✍️ 未装扩展的玩家会看到 `[Chat Unblocker]` 签名水印
+
+### v2.10 更新内容
+- 🧲 **多选与批量复制** — 悬停消息左侧出现勾选圆圈，点击勾选（行绿底高亮+左缘绿线，待选↔已选颜色渐变过渡）；批量模式下悬停另一条消息的圆圈会预览上次勾选到当前位置的整段范围（淡绿），一次点击勾选整段；浮动工具栏提供 复制选中 / 包含发送者名字开关 / 批量开关 / 清除
+- 🛡 **左侧滚动条避让** — 游戏自定义滚动条位于消息列表左侧，勾选圆圈+复制按钮组运行时探测并整体让出一个圆圈宽的间距，滚动条交互不受遮挡
+- 🌊 **悬浮移动丝滑** — 复制按钮/圆圈在消息间以 ease-out 平滑滑动；滚动列表时平滑追赶当前悬浮行不再抖动；常驻勾选圆圈与滚动逐帧同步
+- 🎡 **语言选择优化** — 轮盘式选择器（自由滚动+停止吸附，滚轮一格一整项），边缘淡出；切换语言时各设置块行高平滑过渡，整个面板流动到新布局而非瞬间跳变
+- 🧲 **物理跟随浮层** — 已选圆圈、多选工具栏、错误气泡、发送转圈在拖动消息栏时用 rAF 弹簧物理跟随（按元素大小分配质量/惯性）
+- 🖱️ **统一 hover 状态机** — 显示/隐藏/位置/菜单判定全部收敛到单一 `applyHover()` 状态机，不再有散落的事件处理器
+- 📤 **发送队列重构** — 所有消息（公聊/中文/私聊）统一走队列；发送中可继续打字；相邻重复消息拦截并弹出黄色提示
+- 🌀 **发送转圈指示器** — 输入框右侧绿色 SVG 画弧转圈（去掉黑底）；悬停显示队列；修复层级被游戏面板遮挡问题
+- 🐛 **修复淡入淡出失效** — 游戏页面中 jQuery 的 fadeIn/fadeOut 会静默失效（opacity 停在 0），发送转圈、警告气泡、队列气泡改用纯 CSS 过渡
+- 🧹 **移除灰白斜条纹** — 代码层面移除游戏发送中条纹（配合 CSS 双保险）
+- 🎡 **语言轮盘选择器** — 页面语言改为轮盘：当前语言固定在按钮位置，列表围绕它上下滚动（自由滚动+停止吸附，滚轮一格一整项），点击直达带动画，边缘淡出；退出时生效且面板布局平滑过渡
+- 🎞️ **滚动同步与边缘裁剪** — 勾选圆圈随滚动容器 scroll 事件逐帧完全同步（无轮询延迟），滚出列表可视区时被 `clip-path` 硬裁剪（与消息被遮挡行为一致）；不可见区域的 hover 圆圈/复制按钮不再出现；消息栏拖出屏幕时圆圈不再挤到屏幕边缘重叠
+- ⌨️ **原生输入行为** — 按回车即清空输入栏并移除光标（原版行为）；消息发出后恢复输入框可用，保留游戏原生 4 种退出输入方式（点击空白/点击消息按钮/Esc/空输入按回车）
 
 ### v2.9 更新内容
 - 🌐 **镜像站扩展** — `beta.tanktrouble.com` 现与 `cdn.tanktrouble.com` 一并纳入"镜像网站"开关；描述简化为"cdn. 和 beta. 前缀的网站"
@@ -186,6 +218,13 @@ TankTrouble.com のチャットは非 ASCII 文字をブロックします。こ
 - ⏱ 応答喪失時の自動 UI 復帰
 - 🎛 10 言語対応ポップアップパネル
 
+### v2.10 の新機能
+- 🧲 **複数選択＆一括コピー** — メッセージにホバーすると左側にチェック円が表示され、クリックで選択（緑ハイライト＋左緑線、プレビュー↔選択済みの色がクロスフェード）。一括モードでは別の円にホバーすると前回の選択から現在位置までの範囲全体（淡緑）をプレビューし、ワンクリックで一括選択。フローティングツールバーに コピー / 送信者名の切替 / 一括切替 / クリア
+- 🛡 **左スクロールバー回避** — ゲームのカスタムスクロールバーはメッセージリスト左側にあり、チェック円＋コピーボタンは実行時に検出して円1個分の間隔を確保し、スクロールバーの操作を妨げません
+- 🌊 **シルキーなホバー移動** — コピーボタン/円はメッセージ間を ease-out で滑らかに移動；リストスクロール中も現在の行を滑らかに追跡して振動なし；選択済み円はスクロールとフレーム同期
+- 🎡 **言語選択の改善** — ホイール式セレクター（自由スクロール＋スナップ、ホイール1ノッチ=1項目）、エッジフェード；言語切替時に行の高さがアニメーションし、パネル全体が新しいレイアウトへ滑らかに流動
+- 🧲 **物理追従フローティング UI ＋統一 hover 状態機械** — チャットバーのドラッグ中、フローティング要素は rAF バネ物理で追従；表示/非表示/位置/メニュー判定は単一の `applyHover()` に統一
+
 ### v2.9 の新機能
 - 🌐 **ミラーサイト拡張** — `beta.tanktrouble.com` が `cdn.tanktrouble.com` と共にミラーサイトスイッチに統合；説明は「cdn. と beta. プレフィックスのサイト」に簡略化
 - 🐛 **エンコード切替リグレッション修正** — `_raw` 保存の `setTimeout` フォールバックを復元し、切替が確実に動作（v2.5 からの回帰）
@@ -252,6 +291,13 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🔐 XOR 스크램블로 필터 우회
 - ⏱ 응답 없을 시 UI 자동 복구
 - 🎛 다국어 패널 (10 개 언어)
+
+### v2.10 업데이트 내용
+- 🧲 **다중 선택 및 일괄 복사** — 메시지에 마우스를 올리면 왼쪽에 체크 원이 나타나고 클릭으로 선택(초록 하이라이트+왼쪽 초록선, 미리보기↔선택 색상 크로스페이드). 일괄 모드에서 다른 원에 마우스를 올리면 마지막 선택부터 현재 위치까지 전체 범위(연초록)를 미리보기하고 한 번의 클릭으로 일괄 선택. 플로팅 툴바에서 복사 / 발신자 이름 포함 토글 / 일괄 토글 / 지우기
+- 🛡 **왼쪽 스크롤바 회피** — 게임의 커스텀 스크롤바는 메시지 목록 왼쪽에 있으며, 체크 원+복사 버튼이 런타임에 감지하여 원 1개 폭의 간격을 확보, 스크롤바 조작을 가리지 않음
+- 🌊 **매끄러운 호버 이동** — 복사 버튼/원이 메시지 간 ease-out으로 부드럽게 이동; 목록 스크롤 중에도 현재 행을 부드럽게 추적해 떨림 없음; 상시 체크 원은 스크롤과 프레임 동기화
+- 🎡 **언어 선택 개선** — 휠 방식 셀렉터(자유 스크롤+스냅, 휠 1칸=1항목), 가장자리 페이드; 언어 전환 시 행 높이가 애니메이션되어 패널 전체가 새 레이아웃으로 부드럽게 흐름
+- 🧲 **물리 추종 플로팅 UI + 통합 hover 상태 머신** — 채팅바 드래그 중 플로팅 요소가 rAF 스프링 물리로 추종; 표시/숨김/위치/메뉴 판정이 단일 `applyHover()`로 통일
 
 ### v2.9 업데이트 내용
 - 🌐 **미러 사이트 확장** — `beta.tanktrouble.com`이 `cdn.tanktrouble.com`과 함께 미러 사이트 스위치에 통합; 설명은 "cdn. 및 beta. 접두사 사이트"로 간소화
@@ -320,6 +366,13 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - ⏱ Автовосстановление UI при потере ответа
 - 🎛 Многоязычная панель (10 языков)
 
+### Новое в v2.10
+- 🧲 **Мультивыбор и пакетное копирование** — при наведении на сообщение слева появляется круг-чекбокс, клик выбирает (зелёная подсветка строки + зелёная линия слева, предпросмотр↔выбрано плавный переход цвета). В пакетном режиме наведение на другой круг предварительно показывает весь диапазон от прошлого выбора до курсора (бледно-зелёный), один клик выбирает диапазон целиком. Плавающая панель: копировать / переключатель имён отправителей / пакетный переключатель / очистить
+- 🛡 **Обход левого скроллбара** — кастомный скроллбар игры находится слева от списка сообщений; круг-чекбокс и кнопка копирования обнаруживают его на лету и оставляют зазор в ширину круга, скроллбар полностью доступен
+- 🌊 **Шёлковое движение при наведении** — кнопка копирования/круг плавно скользят между сообщениями (ease-out); при прокрутке списка плавно догоняют текущую строку без дрожания; постоянные круги синхронны с прокруткой покадрово
+- 🎡 **Улучшение выбора языка** — селектор-колесо (свободная прокрутка + прилипание, одна насечка = один пункт), затухание по краям; смена языка анимирует высоты строк, вся панель перетекает в новый макет
+- 🧲 **Физическое следование + единый hover-автомат** — при перетаскивании панели чата плавающие элементы следуют на rAF-пружинах; все решения показать/скрыть/позиция/меню — единый `applyHover()`
+
 ### Новое в v2.9
 - 🌐 **Расширение зеркала** — `beta.tanktrouble.com` теперь вместе с `cdn.tanktrouble.com` под переключателем зеркала; описание упрощено до "сайты с префиксом cdn. и beta."
 - 🐛 **Регресс переключателя кодирования** — восстановлен `setTimeout`-фолбэк хранения `_raw`, переключатель надёжно меняет декодированный/сырой вид (регрессия с v2.5)
@@ -378,6 +431,13 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🔐 تشفير XOR لتجاوز الفلاتر
 - ⏱ استرداد تلقائي للواجهة
 - 🎛 لوحة متعددة اللغات (10 لغات)
+
+### الجديد في v2.10
+- 🧲 **تحديد متعدد ونسخ دفعي** — عند التمرير فوق رسالة يظهر دائرة تحديد على يسارها، والنقر يحددها (تمييز أخضر + خط أخضر يسار، انتقال لوني سلس بين المعاينة والمحدد). في الوضع الدفعي، التمرير فوق دائرة أخرى يعاين النطاق كاملاً من آخر تحديد إلى المؤشر (أخضر فاتح)، ونقرة واحدة تحدد النطاق بالكامل. شريط عائم: نسخ / تبديل أسماء المرسلين / تبديل دفعي / مسح
+- 🛡 **تجنب شريط التمرير الأيسر** — شريط التمرير المخصص للعبة على يسار قائمة الرسائل؛ دائرة التحديد وزر النسخ يكشفانه وقت التشغيل ويتركان فجوة بعرض دائرة كاملة فلا يُحجب الشريط
+- 🌊 **حركة انسيابية عند التمرير** — زر النسخ/الدائرة ينزلق بين الرسائل بـ ease-out؛ أثناء تمرير القائمة يلاحقان الصف الحالي بسلاسة دون اهتزاز؛ دوائر التحديد الدائمة متزامنة مع التمرير إطاراً بإطار
+- 🎡 **تحسين اختيار اللغة** — محدد بعجلة (تمرير حر + التصاق، درجة واحدة = عنصر واحد)، تلاشي الحواف؛ تبديل اللغة يحرّك ارتفاعات الأسطر فتتدفق اللوحة كاملة إلى التخطيط الجديد
+- 🧲 **واجهات عائمة بفيزياء + آلة حالات hover موحدة** — أثناء سحب شريط الدردشة تتبع العناصر العائمة فيزياء نوابض rAF؛ كل قرارات الإظهار/الإخفاء/الموضع/القائمة في `applyHover()` واحدة
 
 ### الجديد في v2.9
 - 🌐 **توسيع المرآة** — `beta.tanktrouble.com` الآن مع `cdn.tanktrouble.com` تحت مفتاح المرآة؛ الوصف مبسط إلى "مواقع ببادئة cdn. و beta."
@@ -438,6 +498,13 @@ Le chat de TankTrouble.com bloque les caractères non-ASCII. Cette extension enc
 - ⏱ Récupération automatique de l'IU
 - 🎛 Panneau multilingue (10 langues)
 
+### Nouveautés v2.10
+- 🧲 **Sélection multiple et copie par lot** — survolez un message pour révéler un cercle de sélection à gauche ; cliquez pour sélectionner (surbrillance verte + ligne verte à gauche, fondu enchaîné prévisualisation↔sélection). En mode lot, survoler un autre cercle prévisualise toute la plage du dernier choix au curseur (vert clair), un clic sélectionne la plage entière. Barre flottante : copier / bascule noms d'expéditeurs / bascule lot / effacer
+- 🛡 **Évitement de la barre de défilement gauche** — la barre personnalisée du jeu est à gauche de la liste ; le cercle + le bouton copie la détectent à l'exécution et gardent un espace d'une largeur de cercle, la barre reste utilisable
+- 🌊 **Déplacement soyeux au survol** — le bouton/le cercle glissent entre les messages en ease-out ; pendant le défilement ils rattrapent la ligne survolée en douceur sans trembler ; les cercles persistants restent synchronisés image par image
+- 🎡 **Amélioration du sélecteur de langue** — sélecteur en roue (défilement libre + aimantation, un cran = un élément), fondu des bords ; changer la langue anime les hauteurs de lignes, tout le panneau coule vers la nouvelle mise en page
+- 🧲 **UI flottante physique + machine à états hover unifiée** — pendant le déplacement de la barre de chat, les éléments flottants suivent en physique à ressort rAF ; toutes les décisions passent par un seul `applyHover()`
+
 ### Nouveautés v2.9
 - 🌐 **Extension du miroir** — `beta.tanktrouble.com` désormais avec `cdn.tanktrouble.com` sous l'interrupteur miroir ; description simplifiée en « sites préfixés cdn. et beta. »
 - 🐛 **Régression du commutateur d'encodage** — restauration du fallback `setTimeout` pour `_raw`, le commutateur bascule fiable (régression depuis v2.5)
@@ -496,6 +563,13 @@ El chat de TankTrouble.com bloquea caracteres no-ASCII. Esta extensión codifica
 - 🔐 Ofuscación XOR anti-filtro
 - ⏱ Recuperación automática de IU
 - 🎛 Panel multilingüe (10 idiomas)
+
+### Novedades v2.10
+- 🧲 **Selección múltiple y copia por lotes** — al pasar el cursor sobre un mensaje aparece un círculo de selección a la izquierda; clic para seleccionar (resaltado verde + línea verde a la izquierda, fundido cruzado vista previa↔seleccionado). En modo por lotes, pasar sobre otro círculo previsualiza todo el rango entre la última selección y el cursor (verde suave), un clic selecciona el rango completo. Barra flotante: copiar / alternar nombres de remitentes / alternar lote / limpiar
+- 🛡 **Evitación de la barra de desplazamiento izquierda** — la barra personalizada del juego está a la izquierda de la lista; el círculo + el botón de copia la detectan en tiempo de ejecución y dejan un hueco del ancho de un círculo, la barra sigue siendo arrastrable
+- 🌊 **Movimiento sedoso al pasar el cursor** — el botón/el círculo se deslizan entre mensajes con ease-out; al desplazar la lista persiguen suavemente la fila actual sin vibrar; los círculos persistentes van sincronizados fotograma a fotograma
+- 🎡 **Mejora del selector de idioma** — selector tipo rueda (desplazamiento libre + imán, una muesca = un elemento), fundido en los bordes; cambiar el idioma anima las alturas de las filas y todo el panel fluye al nuevo diseño
+- 🧲 **UI flotante física + máquina de estados hover unificada** — al arrastrar la barra de chat los elementos flotantes siguen con física de resorte rAF; todas las decisiones pasan por un único `applyHover()`
 
 ### Novedades v2.9
 - 🌐 **Expansión del espejo** — `beta.tanktrouble.com` ahora con `cdn.tanktrouble.com` bajo el interruptor espejo; descripción simplificada a "sitios con prefijo cdn. y beta."
@@ -556,6 +630,13 @@ Der Chat von TankTrouble.com blockiert nicht-ASCII Zeichen. Diese Erweiterung ko
 - ⏱ Automatische UI-Wiederherstellung
 - 🎛 Mehrsprachiges Panel (10 Sprachen)
 
+### Neu in v2.10
+- 🧲 **Mehrfachauswahl & Stapelkopie** — beim Hovern einer Nachricht erscheint links ein Auswahlkreis, Klick wählt aus (grüne Hervorhebung + grüne Linie links, weicher Farbübergang Vorschau↔ausgewählt). Im Stapelmodus zeigt das Hovern eines anderen Kreises den gesamten Bereich von der letzten Auswahl bis zum Cursor (hellgrün) als Vorschau, ein Klick wählt den ganzen Bereich. Schwebende Leiste: Kopieren / Absendernamen umschalten / Stapel umschalten / Leeren
+- 🛡 **Ausweichen vor der linken Scrollleiste** — die eigene Scrollleiste des Spiels liegt links von der Liste; Kreis + Kopierknopf erkennen sie zur Laufzeit und halten einen Kreis breiten Abstand, die Leiste bleibt bedienbar
+- 🌊 **Seidiges Hover-Bewegen** — Knopf/Kreis gleiten zwischen Nachrichten mit ease-out; beim Scrollen der Liste holen sie sanft zur aktuellen Zeile auf ohne Zittern; dauerhafte Kreise bleiben bildsynchron
+- 🎡 **Verbesserter Sprachwähler** — Rad-Wähler (freies Scrollen + Einrasten, eine Raste = ein Eintrag), Rand-Ausblendung; beim Sprachwechsel werden Zeilenhöhen animiert, das ganze Panel fließt ins neue Layout
+- 🧲 **Physikalisch schwebende UI + einheitliche Hover-Zustandsmaschine** — beim Ziehen der Chat-Leiste folgen schwebende Elemente mit rAF-Federphysik; alle Entscheidungen laufen über ein einziges `applyHover()`
+
 ### Neu in v2.9
 - 🌐 **Spiegel-Erweiterung** — `beta.tanktrouble.com` nun mit `cdn.tanktrouble.com` unter dem Spiegelschalter; Beschreibung vereinfacht zu „Sites mit cdn. und beta. Präfix"
 - 🐛 **Regression Kodierungsschalter** — `setTimeout`-Fallback für `_raw` wiederhergestellt, Schalter schaltet zuverlässig (Regression seit v2.5)
@@ -615,6 +696,13 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 - ⏱ Recuperação automática da UI
 - 🎛 Painel multilíngue (10 idiomas)
 
+### Novidades v2.10
+- 🧲 **Seleção múltipla e cópia em lote** — ao passar o cursor sobre uma mensagem aparece um círculo de seleção à esquerda; clique para selecionar (realce verde + linha verde à esquerda, transição suave pré-visualização↔selecionado). No modo lote, passar sobre outro círculo pré-visualiza todo o intervalo entre a última seleção e o cursor (verde suave), um clique seleciona o intervalo inteiro. Barra flutuante: copiar / alternar nomes dos remetentes / alternar lote / limpar
+- 🛡 **Desvio da barra de rolagem esquerda** — a barra personalizada do jogo fica à esquerda da lista; o círculo + o botão de cópia a detectam em tempo de execução e mantêm um espaço da largura de um círculo, a barra continua arrastável
+- 🌊 **Movimento sedoso no hover** — o botão/o círculo deslizam entre mensagens com ease-out; ao rolar a lista perseguem suavemente a linha atual sem tremer; os círculos persistentes ficam sincronizados quadro a quadro
+- 🎡 **Seletor de idioma melhorado** — seletor em roda (rolagem livre + ímã, um entalhe = um item), desvanecimento nas bordas; trocar o idioma anima as alturas das linhas e todo o painel flui para o novo layout
+- 🧲 **UI flutuante física + máquina de estados hover unificada** — ao arrastar a barra de chat os elementos flutuantes seguem com física de mola rAF; todas as decisões passam por um único `applyHover()`
+
 ### Novidades v2.9
 - 🌐 **Expansão do espelho** — `beta.tanktrouble.com` agora com `cdn.tanktrouble.com` sob o interruptor espelho; descrição simplificada para "sites com prefixo cdn. e beta."
 - 🐛 **Regressão do interruptor de codificação** — restaurado o fallback `setTimeout` para `_raw`, o interruptor alterna confiavelmente (regressão desde v2.5)
@@ -668,6 +756,24 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 MIT © 2026 L_Shy_P
 
 ## Changelog / 更新日志
+
+### v2.10 — 2026-08-18
+
+**Major / 重要更新：**
+- 🧲 **Multi-select & batch copy** — check circles on message hover, batch range selection with live preview and cross-fade highlights, floating toolbar (copy / sender names toggle / batch toggle / clear)
+- 🧲 **多选与批量复制** — 悬停消息出现勾选圆圈，批量范围选择带实时预览与颜色渐变高亮，浮动工具栏（复制 / 发送者名字开关 / 批量开关 / 清除）
+- 🛡 **Left scrollbar avoidance** — runtime detection of the game's left custom scrollbar, buttons keep a circle-width gap
+- 🛡 **左侧滚动条避让** — 运行时探测游戏左侧自定义滚动条，按钮组让出一个圆圈宽度
+- 🌊 **Silky hover movement** — ease-out glide between messages, smooth chase while scrolling (no jitter), frame-synced persistent circles
+- 🌊 **悬浮移动丝滑** — 消息间 ease-out 滑动，滚动时平滑追赶不抖动，常驻圆圈逐帧同步
+- 🎡 **Language picker refinement** — wheel-style selector (one item per wheel notch), switching languages animates row heights so the popup flows to the new layout
+- 🎡 **语言选择优化** — 轮盘式选择器（滚轮一格一整项），切换语言行高动画过渡，面板流动到新布局
+- 🧲 **Physics-based floating UI** — floating elements follow the chat bar with rAF spring physics while dragging
+- 🧲 **物理跟随浮层** — 拖动消息栏时浮层用 rAF 弹簧物理跟随
+- 📤 **Sending queue rework + indicator** — unified queue for all message types, green SVG arc-spin indicator, pure CSS fades (jQuery fadeIn silently fails on the game page)
+- 📤 **发送队列重构 + 指示器** — 全类型消息统一队列，绿色 SVG 弧形转圈，纯 CSS 淡入淡出（游戏页 jQuery fadeIn 静默失效）
+- ⌨️ **Native input behavior** — Enter clears input and drops focus; all 4 original ways to exit typing preserved
+- ⌨️ **原生输入行为** — 回车清空输入并移除光标；保留游戏原生 4 种退出输入方式
 
 ### v2.9 — 2026-08-02
 
