@@ -1,6 +1,9 @@
 # 📖 Installation & FAQ
 
 > Install guide, update guide, and FAQ for **TankTrouble Chat Unblock**
+>
+> ⚠️ **v3.1.0 required** — the 2026-10-09 game update broke all older versions (incl. every v2.10.x build); only v3.1.0+ works.
+> ⚠️ **必须使用 v3.1.0** — 2026-10-09 游戏更新使所有旧版本（含全部 v2.10.x）失效，仅 v3.1.0 及以后可用。
 
 <p align="center">
   <b>English</b> &nbsp;|&nbsp;
@@ -12,7 +15,9 @@
   <a href="#français">Français</a> &nbsp;|&nbsp;
   <a href="#español">Español</a> &nbsp;|&nbsp;
   <a href="#deutsch">Deutsch</a> &nbsp;|&nbsp;
-  <a href="#português">Português</a>
+  <a href="#português">Português</a> &nbsp;|&nbsp;
+  <a href="#tiếng-việt">Tiếng Việt</a> &nbsp;|&nbsp;
+  <a href="#বাংলা">বাংলা</a>
 </p>
 
 > 🔙 Back to [Main README](../README.md)
@@ -466,6 +471,96 @@ A: Clique para detalhes. Geralmente arquivo corrompido ou caminho errado. Baixe 
 
 **Q9: Como reportar um bug?**
 A: 1) Abra DevTools (qualquer um: botão direito na página → "Inspecionar" ; ou ⋮ → Mais ferramentas → Ferramentas de desenvolvedor ; ou F12). 2) Aba Console. 3) Procure logs `[TT]` ou erros vermelhos. 4) Botão direito → "Save as..." ou captura de tela. 5) Abra uma issue no [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) com o log e a descrição.
+
+---
+
+## Tiếng Việt
+
+### 📥 Cài đặt
+1. Tải hoặc clone kho này
+2. Mở trang quản lý tiện ích (một trong hai cách):
+   - Nhập `chrome://extensions/` vào thanh địa chỉ → Enter
+   - Hoặc nhấp ⋮ (góc trên phải) → Tiện ích → Quản lý tiện ích
+3. Bật công tắc **Chế độ nhà phát triển** (góc trên phải trang)
+4. Nhấp **Tải tiện ích chưa đóng gói** → chọn thư mục tiện ích
+5. Truy cập [tanktrouble.com](https://tanktrouble.com) và chat bằng bất kỳ ngôn ngữ nào!
+
+### 🔄 Cập nhật (không cần tải lại)
+Thông thường chỉ `content.js` thay đổi. Mở [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) → Ctrl+A → Ctrl+C → dán vào `content.js` cục bộ → vào `chrome://extensions/` → nhấp ↻ trên thẻ tiện ích. Nếu nhật ký thay đổi có nhắc `bridge.js`, `popup.js` hoặc `popup.html`, hãy cập nhật cả những tệp đó theo cùng cách.
+
+### ❓ Câu hỏi thường gặp
+
+**Q1: Làm sao giải nén tệp zip đã tải?**
+A: Windows: nhấp chuột phải vào zip → "Extract All". Mac: nhấp đúp vào zip. Bạn sẽ có một thư mục chứa `manifest.json` và các tệp khác.
+
+**Q2: Khi tải lên báo "manifest.json not found".**
+A: Bạn đã chọn sai thư mục. Hãy chọn thư mục **chứa trực tiếp** `manifest.json` (thư mục gốc sau giải nén), không phải thư mục cha hay thư mục con.
+
+**Q3: Tôi cài cả bản cũ lẫn bản mới — có xung đột không?**
+A: Có! Vào `chrome://extensions/` và **Gỡ** bản cũ (đừng chỉ tắt). Nhiều bản cùng hoạt động gây loạn giải mã.
+
+**Q4: Sau khi cài vẫn không gửi được tiếng Trung.**
+A: Tải lại tanktrouble.com (F5 hoặc Ctrl+R). Tiện ích chỉ hoạt động trên các trang được tải sau khi cài.
+
+**Q5: Sau khi cập nhật tệp, không có gì thay đổi.**
+A: Vào `chrome://extensions/` → nhấp "↻" trên thẻ tiện ích → sau đó tải lại tanktrouble.com. Cả hai bước đều bắt buộc.
+
+**Q6: Có chạy trên Firefox/Safari không?**
+A: Không. Đây là tiện ích Manifest V3 — chỉ Chrome, Edge và các trình duyệt Chromium khác.
+
+**Q7: Người khác không thấy tin nhắn tiếng Trung của tôi.**
+A: Họ cũng cần cài tiện ích. Chỉ người dùng tiện ích thấy văn bản đã giải mã; người khác thấy mã `~XXXX` thô (theo thiết kế).
+
+**Q8: Thẻ tiện ích hiện biểu tượng lỗi.**
+A: Nhấp vào để xem chi tiết. Thường là tệp hỏng hoặc sai đường dẫn. Hãy tải lại và làm lại các bước cài đặt.
+
+**Q9: Làm sao báo lỗi?**
+A: 1) Mở DevTools (cách nào cũng được: nhấp chuột phải vào trang → "Inspect"; hoặc ⋮ → More tools → Developer tools; hoặc nhấn F12). 2) Vào tab Console. 3) Tìm các log bắt đầu bằng `[TT]` hoặc lỗi đỏ. 4) Nhấp chuột phải → "Save as..." để xuất, hoặc chụp màn hình. 5) Mở issue tại [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues) kèm log + mô tả.
+
+---
+
+## বাংলা
+
+### 📥 ইনস্টল
+1. এই রিপো ডাউনলোড বা clone করুন
+2. এক্সটেনশন পেজ খুলুন (যেকোনো একটি পথ):
+   - অ্যাড্রেস বারে `chrome://extensions/` লিখে Enter চাপুন
+   - অথবা ⋮ (উপর-ডান) → Extensions → Manage Extensions
+3. পেজের উপর-ডানে **Developer mode** টগল চালু করুন
+4. **Load unpacked** → এক্সটেনশন ফোল্ডার বেছে নিন
+5. [tanktrouble.com](https://tanktrouble.com) গিয়ে যেকোনো ভাষায় চ্যাট করুন!
+
+### 🔄 আপডেট (নতুন ডাউনলোড ছাড়াই)
+সাধারণত শুধু `content.js` বদলায়। [`content.js`](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Chat-Unblock/master/content.js) খুলুন → Ctrl+A → Ctrl+C → লোকাল `content.js`-এ পেস্ট → `chrome://extensions/` → এক্সটেনশন কার্ডে ↻ ক্লিক। changelog-এ `bridge.js`, `popup.js` বা `popup.html` উল্লেখে থাকলে সেগুলোও একইভাবে আপডেট করুন।
+
+### ❓ সাধারণ জিজ্ঞাসা
+
+**Q1: ডাউনলোড করা zip কীভাবে extract করব?**
+A: Windows: zip-এ রাইট-ক্লিক → "Extract All". Mac: zip-এ ডাবল-ক্লিক। `manifest.json`সহ একটি ফোল্ডার পাবেন।
+
+**Q2: Load করলে "manifest.json not found" দেখায়।**
+A: ভুল ফোল্ডার বেছেছেন। যে ফোল্ডারে `manifest.json` **সরাসরি** আছে (extract-করা root ফোল্ডার) সেটি বেছে নিন, parent বা subfolder নয়।
+
+**Q3: পুরোনো ও নতুন দুটোই ইনস্টলড — সংঘাত হবে?**
+A: হ্যাঁ! `chrome://extensions/`-এ গিয়ে পুরোনোটি **Remove** করুন (শুধু disable নয়)। একাধিক সক্রিয় সংস্করণ decode গোলমাল করে।
+
+**Q4: ইনস্টলের পরেও চীনা পাঠানো যাচ্ছে না।**
+A: tanktrouble.com রিফ্রেশ করুন (F5 বা Ctrl+R)। ইনস্টলের পর লোড হওয়া পেজেই এক্সটেনশন কাজ করে।
+
+**Q5: ফাইল আপডেটের পর কিছু বদলায়নি।**
+A: `chrome://extensions/` → কার্ডে "↻" ক্লিক → তারপর tanktrouble.com রিফ্রেশ। দুটোই লাগবে।
+
+**Q6: Firefox/Safari-তে চলবে?**
+A: না। এটি Manifest V3 এক্সটেনশন — শুধু Chrome, Edge ও অন্যান্য Chromium ব্রাউজারে।
+
+**Q7: অন্যরা আমার চীনা বার্তা দেখতে পাচ্ছে না।**
+A: তাদেরও এক্সটেনশন লাগবে। শুধু ব্যবহারকারী ডিকোড করা টেক্সস্ট দেখে; অন্যরা কাঁচা `~XXXX` কোড দেখে (ডিজাইন অনুযায়ী)।
+
+**Q8: এক্সটেনশন কার্ডে এরর আইকন দেখাচ্ছে।**
+A: ক্লিক করে বিবরণ দেখুন। সাধারণত ফাইল ক্ষতিগ্রস্ত বা ভুল পাথ। আবার ডাউনলোড করে ইনস্টল ধাপগুলো করুন।
+
+**Q9: বাগ কীভাবে রিপোর্ট করব?**
+A: 1) DevTools খুলুন (যেকোনো পথ: পেজে রাইট-ক্লিক → "Inspect"; বা ⋮ → More tools → Developer tools; বা F12)। 2) Console ট্যাবে যান। 3) `[TT]` দিয়ে শুরু লগ বা লাল এরর খুঁজুন। 4) রাইট-ক্লিক → "Save as..." দিয়ে এক্সপোর্ট, বা স্ক্রিনশট নিন। 5) [GitHub Issues](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock/issues)-এ লগ + বিবরণসহ issue খুলুন।
 
 ---
 

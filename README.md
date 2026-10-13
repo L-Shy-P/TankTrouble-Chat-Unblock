@@ -17,8 +17,13 @@
   <a href="#français">Français</a> &nbsp;|&nbsp;
   <a href="#español">Español</a> &nbsp;|&nbsp;
   <a href="#deutsch">Deutsch</a> &nbsp;|&nbsp;
-  <a href="#português">Português</a>
+  <a href="#português">Português</a> &nbsp;|&nbsp;
+  <a href="#tiếng-việt">Tiếng Việt</a> &nbsp;|&nbsp;
+  <a href="#বাংলা">বাংলা</a>
 </p>
+
+> ⚠️ **Update required: v3.1.0** — the 2026-10-09 TankTrouble update broke every older version; only v3.1.0+ works.
+> ⚠️ **必须更新到 v3.1.0** — 2026-10-09 的 TankTrouble 更新使所有旧版本失效，仅 v3.1.0 及以后可用。
 
 ---
 
@@ -31,9 +36,25 @@ TankTrouble.com blocks non-ASCII characters in chat — Chinese, Japanese, Korea
 - 🌍 **All writing systems** — CJK, Arabic, Cyrillic, Thai, Hindi, emoji, special symbols
 - 🔐 **XOR scrambling** — avoids browser/network sensitive-word filters
 - ⏱ **Timeout recovery** — auto-resets UI when server drops the receipt
-- 🎛 **Popup panel** with language selector (10 languages)
+- 🎛 **Popup panel** with language selector (12 languages)
 - 🧲 **Multi-select & batch copy** — check circles, range selection with preview, floating toolbar
 - ✍️ **Signature watermark** — non-extension users see `[Chat Unblocker]` tag
+
+### What's New in v3.1.0
+- 🚨 **Major release — only v3.1.0+ works**: the 2026-10-09 TankTrouble update removed the interfaces every older version relied on; all versions up to v2.10.x are no longer usable. Please update
+- 🇻🇳 **Vietnamese added** — UI, copy menu and docs now support 12 languages
+- 🇧🇩 **Bengali added** — UI, copy menu and docs now support 12 languages
+- 📌 **Works on every page — no refresh needed** — the chat box is a global component and the extension now runs on the forum page too; switching between pages (forum ↔ game) applies automatically
+- 🔧 **Game rewrite compatibility (2026-10-09)** — the game no longer exposes `window.TankTrouble`: ChatBox is sealed inside an esbuild IIFE closure **with a custom event system** (zero `EventTarget` references in the bundle), so native-API hooking cannot reach it. The chat DOM is unchanged though, and message rendering *and* text-width measurement both go through one SVG.js prototype method — `text(x, y, value, settings)`. The extension hooks it and decodes **before** rendering/measuring (layout and displayed text therefore agree); sending is encoded by intercepting `keydown` in the capture phase **at the document level** (a listener on the input itself would lose the race — the game's handler is registered earlier and would read the unencoded text), which the game's `_parseChat()` reads via `chatInput.val()`
+- 🩺 **Diagnostics** — the console logs `[TT] jQuery SVG hook armed @document_start` once the game's jQuery + SVG plugin are up, and `[TT] SVG text hook installed` when the decode hook attaches; the send interceptor logs `[TT] DOM sender armed` once attached (plus `[TT] sender: encoded …` per encoded send). If none of these appear, make sure the extension was reloaded after updating
+- 🐛 **Fixed duplicated text in copied messages** — the new build renders every text segment twice (a `fill="none"` stroke layer plus a filled layer), so plain `textContent` extraction returned everything doubled (`Name:Name:messagemessage`). Copy/export now drop the stroke layer first, and the sender name is recognised through the new SVG class (`{playerId}-messageUsername`), so the "include sender names" toggle works again
+- 🐛 **Fixed the encoding toggle not refreshing history** — messages are SVG-rendered and the original encoded text is no longer kept in the DOM, so an in-place revert is impossible; the extension now triggers the game's own `_refreshChat()` (which re-renders every message from its array — and therefore re-runs the decode hook) through the resize-handle callback, with a chat open/close cycle as fallback
+- 🐛 **Fixed copy/export newlines & wrapped-line garble** — copied text no longer inserts line breaks the sender never typed, and long messages split mid-encoding by wrapping now decode correctly (the renderer stitches the hard-split halves back together)
+- 🐛 **Fixed intermittent dead send-hook (Chinese sometimes not sending)** — the keydown interceptor was only attached if the chat input already existed at probe time; otherwise it was never attached while the polling loop had already stopped and the wake-up event had no dispatcher — so the failure lasted until a page reload (English was unaffected: it needs no encoding). Arming is now document-delegated (decided per event target, no input reference) and polling retries at low frequency with no upper limit
+
+### What's New in v2.10.1
+- 🐛 **Fixed silent copy truncation** — after selecting many messages, the concatenated text could exceed the browser clipboard write limit (~4 MB, sometimes less) and be silently truncated with no error. Over-length text now automatically switches to the `textarea+execCommand` sync channel (no size cap); if any path fails, the toolbar/button **flashes red** instead of pretending to succeed.
+- 🗂 **New "Export as TXT"** — the ⬇ button in the multi-select toolbar downloads the selected records as `chat-export-<timestamp>.txt`. It uses browser file download, completely bypassing the clipboard, so no message is ever lost.
 
 ### What's New in v2.10
 - 🧲 **Multi-select & batch copy** — hover a message to reveal a check circle on its left; click to select (green row highlight + left green line, preview↔checked cross-fade). In batch mode, hovering another circle previews the whole range between the last selection and the cursor (soft green), and one click selects the entire range. A floating toolbar offers copy / include-sender-names toggle / batch toggle / clear
@@ -73,7 +94,7 @@ TankTrouble.com blocks non-ASCII characters in chat — Chinese, Japanese, Korea
 ### What's New in v2.6
 - 🎛 **Version number toggle** — signature watermark now includes a toggleable version number; with switch on: ` | v2.6 [Chat Unblocker]`; with switch off: ` [Chat Unblocker]` — let non-extension users choose readability or version info
 - 📋 **Fluent copy menu** — hover any message to reveal a copy icon; click to copy message text, or hover the icon for a dropdown menu with 3 options: copy text (without names), copy full message (with names), and copy individual player names
-- 🌍 **Full i18n support** — copy menu and all labels available in 10 languages (中文 / 日本語 / 한국어 / Русский / العربية / Français / Español / Deutsch / Português / English)
+- 🌍 **Full i18n support** — copy menu and all labels available in 12 languages (中文 / 日本語 / 한국어 / Русский / العربية / Français / Español / Deutsch / Português / Tiếng Việt / বাংলা / English)
 - 🎬 **Microsoft Fluent animations** — elastic cubic-bezier transitions, velocity-aware movement (no jitter during fast mouse), scale-pulse click feedback, and smooth resize/drag following with fade effects
 - 🐛 **Fixed text selection visibility** — selected text displays green background + black text; text-shadow and text-stroke suppressed
 - 🔧 **Dynamic chat detection** — runtime `CB.chatBody` detection with `CB.chat` fallback; no hardcoded CSS class dependency
@@ -129,9 +150,25 @@ TankTrouble.com 的聊天系统会拦截非 ASCII 字符——中文、日文、
 - 🌍 支持所有书写系统
 - 🔐 XOR 加扰规避敏感词过滤器
 - ⏱ 超时无应答自动恢复 UI
-- 🎛 多语言弹出面板（10 种语言）
+- 🎛 多语言弹出面板（12 种语言）
 - 🧲 多选与批量复制（勾选圆圈、范围预览、浮动工具栏）
 - ✍️ 未装扩展的玩家会看到 `[Chat Unblocker]` 签名水印
+
+### v3.1.0 更新内容
+- 🚨 **大版本发布——仅 v3.1.0+ 可用**：2026-10-09 游戏更新移除了所有旧版依赖的接口，v2.10.x 及更早版本全部失效，请务必更新
+- 🇻🇳 **新增越南语** — 界面、复制菜单与文档现支持 12 种语言
+- 🇧🇩 **新增孟加拉语** — 界面、复制菜单与文档现支持 12 种语言
+- 📌 **全站生效、无需刷新** — 聊天框为全局组件，扩展现在在论坛页同样运行；论坛 ↔ 游戏等页面切换后自动生效，无需刷新
+- 🔧 **适配游戏大改（2026-10-09）** — 游戏不再暴露 `window.TankTrouble`：ChatBox 被封在 esbuild IIFE 闭包内**且使用自定义事件系统**（整包 `EventTarget` 引用数为 0），劫持原生事件 API 无法触及。但聊天 DOM 未变，且消息渲染与文字宽度测量走同一个 SVG.js 原型方法 `text(x, y, value, settings)`。扩展劫持该方法，在**渲染与测量之前**完成解码（布局与显示内容因此天然一致）；发送侧在 **document** 捕获阶段拦截 `keydown`（绑在输入框自身上会晚于游戏自己的处理器——游戏先读到未编码文本，中文会被服务器拒收），游戏 `_parseChat()` 会读到编码文本
+- 🩺 **诊断日志** — 游戏的 jQuery 与 SVG 插件就绪后，控制台打印 `[TT] jQuery SVG hook armed @document_start`；解码钩子挂载时打印 `[TT] SVG text hook installed`；发送拦截器挂载时打印 `[TT] DOM sender armed`（每次编码发送还会打印 `[TT] sender: encoded …`）。若都没有，请确认扩展在更新后已重新加载
+- 🐛 **修复复制文本重复** — 新版游戏对每段文字渲染两遍（`fill="none"` 描边层 + 填充层），直接读 `textContent` 会得到双份（`名字:名字:内容内容`）。复制/导出现在先剔除描边层；发送者名字改用新版 SVG 类名（`{playerId}-messageUsername`）识别，"包含发送者名字"开关恢复有效
+- 🐛 **修复编码开关不刷新历史消息** — 消息由 SVG 渲染、DOM 中不再保留原始编码文本，无法就地还原；扩展改为通过 resize 手柄回调触发游戏自身的 `_refreshChat()`（它会从消息数组重新渲染全部消息，因而重跑解码钩子），并以聊天框关闭/重开作为兜底
+- 🐛 **修复复制换行与折行乱码** — 复制不再插入发送者没打过的换行符；被折行从编码中间切断的长消息现可正确解码（渲染器会把硬切的两半重新拼合）
+- 🐛 **修复发送监听偶发"假死"（中文时好时坏发不出去）** — 旧实现要求探测时聊天输入框已存在才挂载拦截器：若游戏尚未创建输入框，监听不挂载，而轮询已停止、唤醒事件又无人派发——挂载失败即永久失败，只能刷新页面（英文不受影响，因其无需编码）。现改为 document 委托式挂载（按事件目标判定，不依赖输入框引用），未成功时轮询无限期低频重试
+
+### v2.10.1 更新内容
+- 🐛 **修复静默复制截断** — 大量勾选消息后复制，拼接文本超长会触发浏览器剪贴板写入上限（约 4MB，特定条件下更小也会静默截断），旧实现失败不报错，表现为"粘贴内容变短/缺失"。超长文本现已自动切换到 `textarea+execCommand` 同步通道（无容量上限）；任一路径失败时工具栏/按钮会**闪红提示**，不再假装成功。
+- 🗂 **新增「导出为 TXT」** — 多选工具栏的 ⬇ 按钮一键把选中记录导出成 `chat-export-时间戳.txt` 文件，走浏览器文件下载完全绕开剪贴板，聊天记录一条不缺；导出后状态栏临时显示「已导出 N 条 · M 字符」可对照勾选数量自查完整性。
 
 ### v2.10 更新内容
 - 🧲 **多选与批量复制** — 悬停消息左侧出现勾选圆圈，点击勾选（行绿底高亮+左缘绿线，待选↔已选颜色渐变过渡）；批量模式下悬停另一条消息的圆圈会预览上次勾选到当前位置的整段范围（淡绿），一次点击勾选整段；浮动工具栏提供 复制选中 / 包含发送者名字开关 / 批量开关 / 清除
@@ -216,7 +253,20 @@ TankTrouble.com のチャットは非 ASCII 文字をブロックします。こ
 - 🌍 すべての文字体系に対応（CJK、アラビア語、キリル文字、絵文字等）
 - 🔐 XOR スクランブルでフィルター対策
 - ⏱ 応答喪失時の自動 UI 復帰
-- 🎛 10 言語対応ポップアップパネル
+- 🎛 12 言語対応ポップアップパネル
+
+### v3.1.0 の新機能
+- 🚨 **メジャーリリース——動作するのは v3.1.0 以降のみ**：2026-10-09 のゲーム更新で旧版が依存していたインターフェースが削除され、v2.10.x 以前はすべて使用できなくなりました。必ず更新してください
+- 🇻🇳 **ベトナム語を追加** — UI・コピーメニュー・ドキュメントが 12 言語対応に
+- 🇧🇩 **ベンガル語を追加** — UI・コピーメニュー・ドキュメントが 12 言語対応に
+- 📌 **全ページで動作・リロード不要** — チャット欄は全ページ共通のコンポーネントのため、フォーラムでも動作します。フォーラム ↔ ゲームの切り替えも自動で反映されます
+- 🔧 **ゲーム大型改修への対応（2026-10-09）** — ゲームは `window.TankTrouble` を公開しなくなりました（ChatBox は esbuild の IIFE クロージャ内に封じられ、**独自イベントシステム**を使用＝バンドル内の `EventTarget` 参照は 0）。ただしチャット DOM は変わらず、メッセージ描画と文字幅測定は同一の SVG.js プロトタイプメソッド `text(x, y, value, settings)` を通ります。拡張はこれをフックし、**描画・測定の前**にデコードするためレイアウトと表示内容が一致します。送信側は **document** のキャプチャ段階で `keydown` を横取りします（入力欄自体に付けると、先に登録されるゲーム側ハンドラがエンコード前のテキストを読んでしまうため）
+- 🐛 **送信フックの偶発的な「仮死」を修正（中国語が送れたり送れなかったり）** — 旧実装は探索時点でチャット入力欄が存在する場合のみハンドラを装着しました。入力欄がまだ作成されていなければ装着されず、ポーリングは既に停止し、起床イベントには発火元がないため、リロードするまで復帰できませんでした（英語はエンコード不要のため無影響）。現在は document 委任方式（イベントのターゲットで判定し、入力欄の参照は不要）に変更し、成功するまで低頻度ポーリングを無期限に続行します
+- 🐛 **コピーの改行と折り返し部の文字化けを修正** — 送信者が入力していない改行をコピーに挿入しなくなり、折り返しでエンコードの途中で切断された長いメッセージも正しくデコードされます（レンダラーが硬く切れた二つを再び繋ぎ合わせます）
+
+### v2.10.1 の新機能
+- 🐛 **コピー切断の無音バグを修正** — 多数のメッセージを選択してコピーすると、連結テキストがブラウザのクリップボード書き込み上限（約4MB、条件によってはそれ未満でも）を超えて無音で切断されることがありました。長文は自動的に `textarea+execCommand` 同期チャネル（容量制限なし）へ切替。どちらの経路も失敗した場合はツールバー/ボタンが**赤く点滅**して知らせます。
+- 🗂 **「TXTとして書き出す」を追加** — 多選択ツールバーの ⬇ ボタンで選択した記録を `chat-export-タイムスタンプ.txt` としてダウンロード。クリップボードを完全に回避し、記録が1件も欠けません。
 
 ### v2.10 の新機能
 - 🧲 **複数選択＆一括コピー** — メッセージにホバーすると左側にチェック円が表示され、クリックで選択（緑ハイライト＋左緑線、プレビュー↔選択済みの色がクロスフェード）。一括モードでは別の円にホバーすると前回の選択から現在位置までの範囲全体（淡緑）をプレビューし、ワンクリックで一括選択。フローティングツールバーに コピー / 送信者名の切替 / 一括切替 / クリア
@@ -290,7 +340,20 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🌍 모든 문자 체계 지원 (한글, 한자, 가나, 아랍어, 이모지 등)
 - 🔐 XOR 스크램블로 필터 우회
 - ⏱ 응답 없을 시 UI 자동 복구
-- 🎛 다국어 패널 (10 개 언어)
+- 🎛 다국어 패널 (12 개 언어)
+
+### v3.1.0 업데이트 내용
+- 🚨 **메이저 릴리스 — v3.1.0 이상만 작동**: 2026-10-09 게임 업데이트로 구버전이 의존하던 인터페이스가 제거되어 v2.10.x 이하는 모두 사용할 수 없게 되었습니다. 반드시 업데이트하세요
+- 🇻🇳 **베트남어 추가** — UI, 복사 메뉴, 문서가 이제 12개 언어를 지원합니다
+- 🇧🇩 **벵골어 추가** — UI, 복사 메뉴, 문서가 이제 12개 언어를 지원합니다
+- 📌 **모든 페이지에서 작동·새로고침 불필요** — 채팅창이 전역 컴포넌트라 포럼 페이지에서도 작동합니다. 포럼 ↔ 게임 전환도 자동으로 적용됩니다
+- 🔧 **게임 대개편 대응 (2026-10-09)** — 게임이 더 이상 `window.TankTrouble`을 노출하지 않습니다(ChatBox는 esbuild IIFE 클로저에 봉인되고 **자체 이벤트 시스템**을 사용 — 번들 내 `EventTarget` 참조 0회). 하지만 채팅 DOM은 그대로이며, 메시지 렌더링과 텍스트 폭 측정이 동일한 SVG.js 프로토타입 메서드 `text(x, y, value, settings)`를 거칩니다. 확장은 이를 후킹해 **렌더링·측정 이전**에 디코딩하므로 레이아웃과 표시 내용이 일치합니다. 전송 측은 **document** 캡처 단계에서 `keydown`을 가로챕니다(입력창 자체에 달면 먼저 등록되는 게임 핸들러가 인코딩되지 않은 텍스트를 읽게 되기 때문입니다)
+- 🐛 **전송 훅의 간헐적 「가사 상태」 수정(중국어가 될 때도 안 될 때도 있음)** — 예전 구현은 탐색 시점에 채팅 입력란이 이미 있을 때만 핸들러를 장착했습니다. 게임이 아직 입력란을 만들지 않았다면 장착되지 않았고, 폴링은 이미 멈췄으며, 깨우기 이벤트에는 보내는 쪽이 없어 새로고침 전까지 복구되지 않았습니다(영어는 인코딩이 필요 없어 무영향). 이제 document 위임 방식(이벤트 대상으로 판정, 입력란 참조 불필요)으로 장착하며, 성공할 때까지 저빈도 폴링을 무기한 계속합니다
+- 🐛 **복사 줄바꿈 및 줄바꿈 지점의 문자 깨짐 수정** — 발신자가 입력하지 않은 줄바꿈을 복사 결과에 더 이상 넣지 않으며, 줄바꿈으로 인코딩 중간에 잘린 긴 메시지도 이제 올바르게 디코딩됩니다(렌더러가 강제로 잘린 두 조각을 다시 이어 붙입니다)
+
+### v2.10.1 업데이트 내용
+- 🐛 **복사 잘림 무음 버그 수정** — 많은 메시지를 선택해 복사하면 연결된 텍스트가 브라우저 클립보드 쓰기 한도(약 4MB, 조건에 따라 더 적게도)를 초과해 소리 없이 잘렸습니다. 긴 텍스트는 자동으로 `textarea+execCommand` 동기 채널(용량 제한 없음)로 전환됩니다. 어떤 경로든 실패하면 툴바/버튼이 **빨갛게 깜빡여** 알려줍니다.
+- 🗂 **「TXT로 내보내기」추가** — 다중 선택 툴바의 ⬇ 버튼으로 선택한 기록을 `chat-export-타임스탬프.txt`로 다운로드합니다. 클립보드를 완전히 우회해 기록이 하나도 빠지지 않습니다.
 
 ### v2.10 업데이트 내용
 - 🧲 **다중 선택 및 일괄 복사** — 메시지에 마우스를 올리면 왼쪽에 체크 원이 나타나고 클릭으로 선택(초록 하이라이트+왼쪽 초록선, 미리보기↔선택 색상 크로스페이드). 일괄 모드에서 다른 원에 마우스를 올리면 마지막 선택부터 현재 위치까지 전체 범위(연초록)를 미리보기하고 한 번의 클릭으로 일괄 선택. 플로팅 툴바에서 복사 / 발신자 이름 포함 토글 / 일괄 토글 / 지우기
@@ -364,7 +427,20 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🌍 Поддержка всех письменностей (кириллица, CJK, арабица, эмодзи)
 - 🔐 XOR-скремблирование для обхода фильтров
 - ⏱ Автовосстановление UI при потере ответа
-- 🎛 Многоязычная панель (10 языков)
+- 🎛 Многоязычная панель (12 языков)
+
+### Новое в v3.1.0
+- 🚨 **Крупный релиз — работает только v3.1.0 и новее**: обновление игры от 2026-10-09 удалило интерфейсы, на которые опирались все старые версии; всё до v2.10.x больше не работает. Пожалуйста, обновитесь
+- 🇻🇳 **Добавлен вьетнамский язык** — интерфейс, меню копирования и документация теперь на 12 языках
+- 🇧🇩 **Добавлен бенгальский язык** — интерфейс, меню копирования и документация теперь на 12 языках
+- 📌 **Работает на всех страницах — без перезагрузки** — чат глобальный, поэтому расширение работает и на форуме; переходы между страницами (форум ↔ игра) применяются автоматически
+- 🔧 **Совместимость с крупным обновлением игры (2026-10-09)** — игра больше не предоставляет `window.TankTrouble`: ChatBox заперт внутри IIFE-замыкания esbuild **с собственной системой событий** (в бандле 0 ссылок на `EventTarget`), поэтому перехват нативных API до него не достаёт. Однако DOM чата не изменился, а отрисовка сообщений и измерение ширины текста идут через один и тот же метод прототипа SVG.js — `text(x, y, value, settings)`. Расширение перехватывает его и декодирует **до отрисовки и измерения**; отправка кодируется перехватом `keydown` на фазе захвата **на уровне document** (обработчик игры регистрируется раньше и прочитал бы некодированный текст, если слушать само поле ввода)
+- 🐛 **Исправлен периодический «сон» перехватчика отправки (китайский уходил через раз)** — обработчик навешивался только если поле ввода уже существовало в момент проверки; если игра ещё не создала его, слушатель не навешивался, а опрос уже был остановлен и у события-пробуждения не было отправителя — сбой держался до перезагрузки страницы (английский не затронут: ему не нужно кодирование). Теперь навешивание делегировано на document (определяется по цели события, без ссылки на поле), а опрос повторяет попытки с низкой частотой без ограничения — до успеха
+- 🐛 **Исправлены переносы строк и «кракозябры» на переносе при копировании** — в скопированный текст больше не вставляются переносы, которых отправитель не набирал; длинные сообщения, разрезанные переносом посреди кодирования, теперь корректно декодируются (рендерер склеивает две принудительно разрезанные половины обратно)
+
+### Новое в v2.10.1
+- 🐛 **Исправлена тихая обрезка при копировании** — при копировании множества сообщений склеенный текст превышал лимит записи в буфер обмена (~4МБ, иногда меньше) и молча обрезался. Длинный текст теперь автоматически идёт через синхронный канал `textarea+execCommand` (без ограничения объёма); при любом сбое панель/кнопка **мигает красным** вместо притворного успеха.
+- 🗂 **Новое: «Экспорт в TXT»** — кнопка ⬇ на панели множественного выбора скачивает выбранные записи в `chat-export-<timestamp>.txt` через загрузку файла, полностью минуя буфер обмена, — ни одна запись не теряется.
 
 ### Новое в v2.10
 - 🧲 **Мультивыбор и пакетное копирование** — при наведении на сообщение слева появляется круг-чекбокс, клик выбирает (зелёная подсветка строки + зелёная линия слева, предпросмотр↔выбрано плавный переход цвета). В пакетном режиме наведение на другой круг предварительно показывает весь диапазон от прошлого выбора до курсора (бледно-зелёный), один клик выбирает диапазон целиком. Плавающая панель: копировать / переключатель имён отправителей / пакетный переключатель / очистить
@@ -394,7 +470,7 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 ### Новое в v2.6
 - 🎛 **Переключатель версии** — подпись включает опциональный номер версии; вкл: ` | v2.6 [Chat Unblocker]`, выкл: ` [Chat Unblocker]`
 - 📋 **Fluent меню копирования** — наведите на сообщение → иконка копирования; клик — копия текста, ховер — меню (только текст / всё / имя)
-- 🌍 **Полная i18n поддержка** — меню и все метки на 10 языках
+- 🌍 **Полная i18n поддержка** — меню и все метки на 12 языках
 - 🎬 **Microsoft Fluent анимации** — упругие кривые Безье, детекция скорости мыши, пульсация при клике, следование при ресайзе
 - 🐛 **Видимость выделения текста** — выделение: зелёный фон + чёрный текст
 - 🔧 **Динамическое обнаружение чата** — `CB.chatBody` + fallback `CB.chat`
@@ -430,7 +506,20 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 - 🌍 دعم جميع أنظمة الكتابة (العربية، CJK، السيريلية، الإيموجي)
 - 🔐 تشفير XOR لتجاوز الفلاتر
 - ⏱ استرداد تلقائي للواجهة
-- 🎛 لوحة متعددة اللغات (10 لغات)
+- 🎛 لوحة متعددة اللغات (12 لغات)
+
+### الجديد في v3.1.0
+- 🚨 **إصدار رئيسي — يعمل فقط v3.1.0 فأحدث**: تحديث اللعبة بتاريخ 2026-10-09 أزال الواجهات التي كانت تعتمد عليها كل الإصدارات القديمة؛ كل ما قبل v2.10.x لم يعد يعمل. يرجى التحديث
+- 🇻🇳 **إضافة اللغة الفيتنامية** — الواجهة وقائمة النسخ والمستندات تدعم الآن 12 لغة
+- 🇧🇩 **إضافة اللغة البنغالية** — الواجهة وقائمة النسخ والمستندات تدعم الآن 12 لغة
+- 📌 **يعمل في كل الصفحات — دون تحديث** — صندوق الدردشة عام، لذا تعمل الإضافة في صفحة المنتدى أيضًا؛ والتنقل بين الصفحات (المنتدى ↔ اللعبة) يُطبَّق تلقائيًا
+- 🔧 **التوافق مع التحديث الشامل للعبة (2026-10-09)** — لم تعد اللعبة تُعرّف `window.TankTrouble`: أصبح ChatBox محصورًا داخل إغلاق esbuild IIFE **بنظام أحداث خاص** (صفر إشارات إلى `EventTarget`)، لذا لا تصل إليه اعتراضات الـ API الأصلية. لكن DOM الدردشة لم يتغير، ويتم رسم الرسائل وقياس عرض النص عبر نفس دالة النموذج SVG.js — `text(x, y, value, settings)`. تعترض الإضافة هذه الدالة وتفك الترميز **قبل الرسم والقياس**؛ أما الإرسال فيُرمَّز باعتراض `keydown` في مرحلة الالتقاط **على مستوى document** (ربط المستمع بالحقل نفسه يخسر السباق — معالج اللعبة يُسجَّل أولاً وسيقرأ النص غير المُرمَّز)
+- 🐛 **إصلاح «تعطُّل» حارس الإرسال المتقطِّع (الصينية تُرسَل أحيانًا ولا تُرسَل أحيانًا)** — كان الحارس يُثبَّت فقط إذا وُجد حقل إدخال الدردشة لحظة الفحص؛ وإن لم تكن اللعبة قد أنشأته بعد فلا يُثبَّت، بينما يكون الاستقصاء قد توقف أصلًا وحدث الاستيقاظ بلا مُرسِل — فيبقى الخلل حتى إعادة تحميل الصفحة (الإنجليزية لا تتأثر لعدم حاجتها إلى ترميز). الآن يُثبَّت الحارس بالتوكيل على document (يُحكَم حسب هدف الحدث، دون الحاجة إلى مرجع الحقل)، ويستمر الاستقصاء بمعدل منخفض وبلا حد حتى النجاح
+- 🐛 **إصلاح فواصل الأسطر والرموز المشوّهة عند النسخ** — لم تُدرَج فواصل أسطر في النص المنسوخ لم يكتبها المُرسِل، والرسائل الطويلة التي يقطعها الالتفاف في منتصف الترميز تُفَكّ الآن بشكل صحيح (يقوم المُصيّر بإلصاق النصفين المقطوعين قسرًا مرة أخرى)
+
+### الجديد في v2.10.1
+- 🐛 **إصلاح اقتطاع النسخ الصامت** — عند نسخ رسائل كثيرة، قد يتجاوز النص المجمّع حدّ الكتابة في الحافظة (~4 م.ب، وأقل في بعض الحالات) فيُقتطع بصمت. يتم الآن تحويل النص الطويل تلقائيًا إلى قناة `textarea+execCommand` المتزامنة (بلا حدّ للحجم)؛ وعند فشل أي مسار يومض الشريط/الزر **بالأحمر** بدلاً من الادعاء بالنجاح.
+- 🗂 **إضافة «تصدير كـ TXT»** — زر ⬇ في شريط التحديد المتعدد يحمّل السجلات المحددة كملف `chat-export-<time>.txt` عبر تنزيل الملف، متجاوزًا الحافظة تمامًا، فلا تُفقد أي رسالة.
 
 ### الجديد في v2.10
 - 🧲 **تحديد متعدد ونسخ دفعي** — عند التمرير فوق رسالة يظهر دائرة تحديد على يسارها، والنقر يحددها (تمييز أخضر + خط أخضر يسار، انتقال لوني سلس بين المعاينة والمحدد). في الوضع الدفعي، التمرير فوق دائرة أخرى يعاين النطاق كاملاً من آخر تحديد إلى المؤشر (أخضر فاتح)، ونقرة واحدة تحدد النطاق بالكامل. شريط عائم: نسخ / تبديل أسماء المرسلين / تبديل دفعي / مسح
@@ -460,7 +549,7 @@ TankTrouble.com 채팅은 비ASCII 문자를 차단합니다. 이 확장 프로�
 ### الجديد في v2.6
 - 🎛 **تبديل رقم الإصدار** — التوقيع يتضمن رقم إصدار قابل للتبديل؛ تشغيل: ` | v2.6 [Chat Unblocker]`، إيقاف: ` [Chat Unblocker]`
 - 📋 **قائمة نسخ Fluent** — مرر فوق الرسالة لإظهار أيقونة النسخ؛ انقر لنسخ النص، مرر للأعلى للقائمة (نص فقط / الكل / الاسم)
-- 🌍 **دعم كامل متعدد اللغات** — القائمة وجميع التسميات بـ 10 لغات
+- 🌍 **دعم كامل متعدد اللغات** — القائمة وجميع التسميات بـ 12 لغة
 - 🎬 **رسوم Microsoft Fluent المتحركة** — منحنيات بيزيه مرنة، كشف سرعة الفأرة، نبضة عند النقر، تتبع عند تغيير الحجم
 - 🐛 **رؤية تحديد النص** — التحديد: خلفية خضراء + نص أسود
 - 🔧 **كشف ديناميكي للدردشة** — `CB.chatBody` + احتياطي `CB.chat`
@@ -496,7 +585,20 @@ Le chat de TankTrouble.com bloque les caractères non-ASCII. Cette extension enc
 - 🌍 Tous les systèmes d'écriture (CJK, arabe, cyrillique, emoji)
 - 🔐 Brouillage XOR anti-filtre
 - ⏱ Récupération automatique de l'IU
-- 🎛 Panneau multilingue (10 langues)
+- 🎛 Panneau multilingue (12 langues)
+
+### Nouveautés v3.1.0
+- 🚨 **Version majeure — seul v3.1.0+ fonctionne** : la mise à jour du jeu du 2026-10-09 a supprimé les interfaces dont dépendaient toutes les anciennes versions ; tout jusqu'à v2.10.x est inutilisable. Veuillez mettre à jour
+- 🇻🇳 **Ajout du vietnamien** — interface, menu de copie et documentation désormais en 12 langues
+- 🇧🇩 **Ajout du bengali** — interface, menu de copie et documentation désormais en 12 langues
+- 📌 **Fonctionne sur toutes les pages — sans actualisation** — la boîte de chat est globale, l'extension tourne donc aussi sur le forum ; les changements de page (forum ↔ jeu) s'appliquent automatiquement
+- 🔧 **Compatibilité avec la refonte du jeu (2026-10-09)** — le jeu n'expose plus `window.TankTrouble` : ChatBox est enfermé dans une fermeture IIFE esbuild **avec son propre système d'événements** (zéro référence à `EventTarget`), donc le hooking des API natives ne peut pas l'atteindre. Le DOM du chat est inchangé et le rendu des messages comme la mesure de largeur passent par une même méthode du prototype SVG.js — `text(x, y, value, settings)`. L'extension la détourne et décode **avant** rendu/mesure ; l'envoi est encodé en interceptant `keydown` en phase de capture **au niveau du document** (un écouteur sur le champ lui-même perdrait la course — le gestionnaire du jeu s'enregistre avant et lirait le texte non encodé)
+- 🐛 **Corrigé l'« engourdissement » intermittent du hook d'envoi (le chinois partait par intermittence)** — l'ancien code n'attachait l'écouteur que si le champ de saisie existait déjà lors du sondage ; si le jeu ne l'avait pas encore créé, l'écouteur n'était jamais attaché alors que le sondage était déjà arrêté et que l'événement de réveil n'avait aucun émetteur — la panne durait jusqu'au rechargement de la page (l'anglais n'était pas touché, sans besoin d'encodage). L'attachement est désormais délégué au document (décidé selon la cible de l'événement, sans référence au champ) et le sondage réessaie à basse fréquence, sans limite
+- 🐛 **Correction des sauts de ligne et du texte corrompu aux retours à la ligne** — la copie n'insère plus de sauts de ligne que l'expéditeur n'a tapés, et les messages longs coupés au milieu de l'encodage par le retour à la ligne se décodent désormais correctement (le moteur recolle les deux moitiés coupées de force)
+
+### Nouveautés v2.10.1
+- 🐛 **Correction de la troncature silencieuse** — en copiant de nombreux messages, le texte concaténé pouvait dépasser la limite d'écriture du presse-papiers (~4 Mo, parfois moins) et être tronqué sans erreur. Le texte long bascule maintenant automatiquement vers le canal synchrone `textarea+execCommand` (sans limite de taille) ; en cas d'échec, la barre/le bouton **clignote en rouge** au lieu de faire semblant de réussir.
+- 🗂 **Nouveau « Exporter en TXT »** — le bouton ⬇ de la barre de sélection multiple télécharge les messages sélectionnés en `chat-export-<horodatage>.txt` via le téléchargement de fichier, contournant totalement le presse-papiers, aucune perte.
 
 ### Nouveautés v2.10
 - 🧲 **Sélection multiple et copie par lot** — survolez un message pour révéler un cercle de sélection à gauche ; cliquez pour sélectionner (surbrillance verte + ligne verte à gauche, fondu enchaîné prévisualisation↔sélection). En mode lot, survoler un autre cercle prévisualise toute la plage du dernier choix au curseur (vert clair), un clic sélectionne la plage entière. Barre flottante : copier / bascule noms d'expéditeurs / bascule lot / effacer
@@ -526,7 +628,7 @@ Le chat de TankTrouble.com bloque les caractères non-ASCII. Cette extension enc
 ### Nouveautés v2.6
 - 🎛 **Bascule du numéro de version** — signature avec numéro de version optionnel ; activé : ` | v2.6 [Chat Unblocker]`, désactivé : ` [Chat Unblocker]`
 - 📋 **Menu de copie Fluent** — survolez un message pour l'icône de copie ; clic = copie du texte, survol = menu (texte seul / tout / nom)
-- 🌍 **Support i18n complet** — menu et toutes les étiquettes en 10 langues
+- 🌍 **Support i18n complet** — menu et toutes les étiquettes en 12 langues
 - 🎬 **Animations Microsoft Fluent** — courbes de Bézier élastiques, détection de vitesse, pulsation au clic, suivi au redimensionnement
 - 🐛 **Visibilité de la sélection** — sélection : fond vert + texte noir
 - 🔧 **Détection dynamique du chat** — `CB.chatBody` + fallback `CB.chat`
@@ -562,7 +664,20 @@ El chat de TankTrouble.com bloquea caracteres no-ASCII. Esta extensión codifica
 - 🌍 Todos los sistemas de escritura (CJK, árabe, cirílico, emoji)
 - 🔐 Ofuscación XOR anti-filtro
 - ⏱ Recuperación automática de IU
-- 🎛 Panel multilingüe (10 idiomas)
+- 🎛 Panel multilingüe (12 idiomas)
+
+### Novedades v3.1.0
+- 🚨 **Versión mayor — solo funciona v3.1.0+**: la actualización del juego del 2026-10-09 eliminó las interfaces de las que dependían todas las versiones anteriores; todo hasta v2.10.x ya no funciona. Actualiza, por favor
+- 🇻🇳 **Añadido el vietnamita** — interfaz, menú de copia y documentación ahora en 12 idiomas
+- 🇧🇩 **Añadido el bengalí** — interfaz, menú de copia y documentación ahora en 12 idiomas
+- 📌 **Funciona en todas las páginas — sin recargar** — el chat es global, así que la extensión también funciona en el foro; el cambio entre páginas (foro ↔ juego) se aplica automáticamente
+- 🔧 **Compatibilidad con la reescritura del juego (2026-10-09)** — el juego ya no expone `window.TankTrouble`: ChatBox queda sellado en un cierre IIFE de esbuild **con su propio sistema de eventos** (cero referencias a `EventTarget`), así que el hooking de APIs nativas no lo alcanza. El DOM del chat no cambió, y tanto el renderizado como la medición de ancho pasan por el mismo método del prototipo SVG.js — `text(x, y, value, settings)`. La extensión lo intercepta y decodifica **antes** de renderizar/medir; el envío se codifica interceptando `keydown` en fase de captura **a nivel de document** (un listener en el propio campo perdería la carrera — el manejador del juego se registra antes y leería el texto sin codificar)
+- 🐛 **Corregido el «letargo» intermitente del hook de envío (el chino se enviaba a ratos)** — el código antiguo solo conectaba el listener si el campo de entrada ya existía al sondear; si el juego aún no lo había creado, el listener nunca se conectaba mientras el sondeo ya se había detenido y el evento de aviso no tenía emisor — el fallo persistía hasta recargar la página (el inglés no se veía afectado, pues no necesita codificación). Ahora la conexión se delega a document (se decide según el objetivo del evento, sin referencia al campo) y el sondeo reintenta a baja frecuencia, sin límite
+- 🐛 **Corregidos los saltos de línea y el texto corrupto en los ajustes de línea** — la copia ya no inserta saltos de línea que el remitente no escribió, y los mensajes largos cortados a mitad de la codificación por el ajuste de línea ahora se decodifican correctamente (el motor vuelve a unir las dos mitades cortadas a la fuerza)
+
+### Novedades v2.10.1
+- 🐛 **Corregido el recorte silencioso al copiar** — al copiar muchos mensajes, el texto concatenado podía superar el límite de escritura del portapapeles (~4 MB, a veces menos) y recortarse sin error. El texto largo ahora pasa automáticamente al canal síncrono `textarea+execCommand` (sin límite de tamaño); si cualquier vía falla, la barra/el botón **parpadea en rojo** en lugar de fingir éxito.
+- 🗂 **Nuevo « Exportar como TXT »** — el botón ⬇ de la barra de selección múltiple descarga los mensajes seleccionados como `chat-export-<marca de tiempo>.txt` mediante descarga de archivo, evitando por completo el portapapeles.
 
 ### Novedades v2.10
 - 🧲 **Selección múltiple y copia por lotes** — al pasar el cursor sobre un mensaje aparece un círculo de selección a la izquierda; clic para seleccionar (resaltado verde + línea verde a la izquierda, fundido cruzado vista previa↔seleccionado). En modo por lotes, pasar sobre otro círculo previsualiza todo el rango entre la última selección y el cursor (verde suave), un clic selecciona el rango completo. Barra flotante: copiar / alternar nombres de remitentes / alternar lote / limpiar
@@ -592,7 +707,7 @@ El chat de TankTrouble.com bloquea caracteres no-ASCII. Esta extensión codifica
 ### Novedades v2.6
 - 🎛 **Alternancia de número de versión** — firma con número de versión opcional; activado: ` | v2.6 [Chat Unblocker]`, desactivado: ` [Chat Unblocker]`
 - 📋 **Menú de copia Fluent** — pasa el ratón sobre un mensaje para el icono de copia; clic = copiar texto, hover = menú (solo texto / todo / nombre)
-- 🌍 **Soporte i18n completo** — menú y todas las etiquetas en 10 idiomas
+- 🌍 **Soporte i18n completo** — menú y todas las etiquetas en 12 idiomas
 - 🎬 **Animaciones Microsoft Fluent** — curvas Bézier elásticas, detección de velocidad, pulsación al clic, seguimiento al redimensionar
 - 🐛 **Visibilidad de selección de texto** — selección: fondo verde + texto negro
 - 🔧 **Detección dinámica del chat** — `CB.chatBody` + fallback `CB.chat`
@@ -628,7 +743,20 @@ Der Chat von TankTrouble.com blockiert nicht-ASCII Zeichen. Diese Erweiterung ko
 - 🌍 Alle Schriftsysteme (CJK, Arabisch, Kyrillisch, Emoji)
 - 🔐 XOR-Verschlüsselung gegen Filter
 - ⏱ Automatische UI-Wiederherstellung
-- 🎛 Mehrsprachiges Panel (10 Sprachen)
+- 🎛 Mehrsprachiges Panel (12 Sprachen)
+
+### Neu in v3.1.0
+- 🚨 **Großes Release — nur v3.1.0+ funktioniert**: das Spiel-Update vom 2026-10-09 entfernte die Schnittstellen, auf die alle älteren Versionen angewiesen waren; alles bis v2.10.x ist unbrauchbar. Bitte aktualisieren
+- 🇻🇳 **Vietnamesisch hinzugefügt** — UI, Kopiermenü und Doku jetzt in 12 Sprachen
+- 🇧🇩 **Bengalisch hinzugefügt** — UI, Kopiermenü und Doku jetzt in 12 Sprachen
+- 📌 **Funktioniert auf allen Seiten — ohne Neuladen** — das Chat-Fenster ist global, daher läuft die Erweiterung auch im Forum; Seitenwechsel (Forum ↔ Spiel) greifen automatisch
+- 🔧 **Kompatibilität mit dem großen Spiel-Update (2026-10-09)** — das Spiel stellt `window.TankTrouble` nicht mehr bereit: ChatBox liegt in einer esbuild-IIFE-Closure **mit eigenem Event-System** (null `EventTarget`-Referenzen im Bundle), ist also per Native-API-Hooking nicht erreichbar. Das Chat-DOM blieb jedoch unverändert, und Nachrichten-Rendering und Textbreiten-Messung laufen über dieselbe SVG.js-Prototypmethode — `text(x, y, value, settings)`. Die Erweiterung hakt sie ab und dekodiert **vor** Rendering/Messung; das Senden wird per `keydown`-Abfangen in der Capture-Phase **auf Dokumentebene** kodiert (ein Listener direkt am Eingabefeld würde das Rennen verlieren — der Handler des Spiels registriert sich zuerst und läse den unkodierten Text)
+- 🐛 **Intervallweise «toter» Sende-Hook behoben (Chinesisch ging mal, mal nicht)** — früher wurde der Listener nur angehängt, wenn das Chat-Eingabefeld beim Prüfen bereits existierte; hatte das Spiel es noch nicht erstellt, wurde er nie angehängt, während die Abfrageschleife schon gestoppt war und das Wecksignal keinen Absender hatte — der Fehler blieb bis zum Neuladen der Seite (Englisch war nicht betroffen, es braucht keine Kodierung). Jetzt wird per document-Delegation angehängt (anhand des Ereignisziels entschieden, ohne Feld-Referenz) und die Abfrage versucht es dauerhaft in niedriger Frequenz
+- 🐛 **Zeilenumbrüche und verstümmelter Text an Umbrochen behoben** — das Kopieren fügt keine Umbrüche mehr ein, die der Absender nie getippt hat, und lange Nachrichten, die mitten in der Kodierung umgebrochen werden, dekodieren jetzt korrekt (der Renderer fügt die hart durchtrennten Hälften wieder zusammen)
+
+### Neu in v2.10.1
+- 🐛 **Stilles Abschneiden beim Kopieren behoben** — beim Kopieren vieler Nachrichten konnte der zusammengefügte Text das Schreiblimit der Zwischenablage (~4 MB, manchmal weniger) überschreiten und still abgeschnitten werden. Langer Text wechselt jetzt automatisch auf den synchronen `textarea+execCommand`-Kanal (ohne Größenlimit); schlägt ein Pfad fehl, **blinkt die Leiste/der Knopf rot**, statt Erfolg vorzutäuschen.
+- 🗂 **Neu: „Als TXT exportieren“** — der ⬇-Knopf der Mehrfachauswahl lädt die ausgewählten Nachrichten als `chat-export-<Zeitstempel>.txt` per Dateidownload herunter und umgeht die Zwischenablage komplett.
 
 ### Neu in v2.10
 - 🧲 **Mehrfachauswahl & Stapelkopie** — beim Hovern einer Nachricht erscheint links ein Auswahlkreis, Klick wählt aus (grüne Hervorhebung + grüne Linie links, weicher Farbübergang Vorschau↔ausgewählt). Im Stapelmodus zeigt das Hovern eines anderen Kreises den gesamten Bereich von der letzten Auswahl bis zum Cursor (hellgrün) als Vorschau, ein Klick wählt den ganzen Bereich. Schwebende Leiste: Kopieren / Absendernamen umschalten / Stapel umschalten / Leeren
@@ -658,7 +786,7 @@ Der Chat von TankTrouble.com blockiert nicht-ASCII Zeichen. Diese Erweiterung ko
 ### Neu in v2.6
 - 🎛 **Versionsnummer-Umschalter** — Signatur mit optionaler Versionsnummer; an: ` | v2.6 [Chat Unblocker]`, aus: ` [Chat Unblocker]`
 - 📋 **Fluent Kopiermenü** — über Nachricht hovern für Kopier-Icon; Klick = Text kopieren, Hover = Menü (nur Text / alles / Name)
-- 🌍 **Vollständige i18n-Unterstützung** — Menü und alle Labels in 10 Sprachen
+- 🌍 **Vollständige i18n-Unterstützung** — Menü und alle Labels in 12 Sprachen
 - 🎬 **Microsoft Fluent Animationen** — elastische Bézier-Kurven, Mausgeschwindigkeitserkennung, Klick-Puls, Verfolgung bei Größenänderung
 - 🐛 **Textauswahl-Sichtbarkeit** — Auswahl: grüner Hintergrund + schwarzer Text
 - 🔧 **Dynamische Chat-Erkennung** — `CB.chatBody` + Fallback `CB.chat`
@@ -694,7 +822,20 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 - 🌍 Todos os sistemas de escrita (CJK, árabe, cirílico, emoji)
 - 🔐 Embaralhamento XOR anti-filtro
 - ⏱ Recuperação automática da UI
-- 🎛 Painel multilíngue (10 idiomas)
+- 🎛 Painel multilíngue (12 idiomas)
+
+### Novidades v3.1.0
+- 🚨 **Versão principal — só o v3.1.0+ funciona**: a atualização do jogo de 2026-10-09 removeu as interfaces das quais todas as versões antigas dependiam; tudo até o v2.10.x não funciona mais. Atualize, por favor
+- 🇻🇳 **Vietnamita adicionado** — interface, menu de cópia e documentação agora em 12 idiomas
+- 🇧🇩 **Bengali adicionado** — interface, menu de cópia e documentação agora em 12 idiomas
+- 📌 **Funciona em todas as páginas — sem recarregar** — o chat é global, então a extensão também funciona no fórum; a troca entre páginas (fórum ↔ jogo) é aplicada automaticamente
+- 🔧 **Compatibilidade com a reescrita do jogo (2026-10-09)** — o jogo não expõe mais `window.TankTrouble`: o ChatBox fica selado numa closure IIFE do esbuild **com sistema de eventos próprio** (zero referências a `EventTarget` no bundle), então o hooking de APIs nativas não o alcança. O DOM do chat, porém, não mudou, e a renderização das mensagens e a medição de largura passam pelo mesmo método do protótipo SVG.js — `text(x, y, value, settings)`. A extensão o intercepta e decodifica **antes** de renderizar/medir; o envio é codificado interceptando `keydown` na fase de captura **no nível do document** (um listener no próprio campo perderia a corrida — o handler do jogo se registra antes e leria o texto não codificado)
+- 🐛 **Corrigido o «congelamento» intermitente do hook de envio (o chinês ora enviava, ora não)** — o código antigo só conectava o listener se o campo de entrada já existisse no momento da sondagem; se o jogo ainda não o tivesse criado, o listener nunca era conectado, enquanto a sondagem já havia parado e o evento de despertar não tinha emissor — a falha permanecia até recarregar a página (o inglês não era afetado, pois não precisa de codificação). Agora a conexão é delegada ao document (decidida pelo alvo do evento, sem referência ao campo) e a sondagem tenta novamente em baixa frequência, sem limite
+- 🐛 **Corrigidos quebras de linha e texto corrompido nas quebras de linha** — a cópia não insere mais quebras de linha que o remetente não digitou, e mensagens longas cortadas no meio da codificação pela quebra agora são decodificadas corretamente (o renderizador junta novamente as duas metades cortadas à força)
+
+### Novidades v2.10.1
+- 🐛 **Corrigido o corte silencioso ao copiar** — ao copiar muitas mensagens, o texto concatenado podia exceder o limite de escrita da área de transferência (~4MB, às vezes menos) e ser cortado sem erro. Texto longo agora muda automaticamente para o canal síncrono `textarea+execCommand` (sem limite de tamanho); se qualquer caminho falhar, a barra/o botão **pisca em vermelho** em vez de fingir sucesso.
+- 🗂 **Novo « Exportar como TXT »** — o botão ⬇ da barra de seleção múltipla baixa as mensagens selecionadas como `chat-export-<timestamp>.txt` pelo download de arquivo, contornando totalmente a área de transferência.
 
 ### Novidades v2.10
 - 🧲 **Seleção múltipla e cópia em lote** — ao passar o cursor sobre uma mensagem aparece um círculo de seleção à esquerda; clique para selecionar (realce verde + linha verde à esquerda, transição suave pré-visualização↔selecionado). No modo lote, passar sobre outro círculo pré-visualiza todo o intervalo entre a última seleção e o cursor (verde suave), um clique seleciona o intervalo inteiro. Barra flutuante: copiar / alternar nomes dos remetentes / alternar lote / limpar
@@ -724,7 +865,7 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 ### Novidades v2.6
 - 🎛 **Alternância de número de versão** — assinatura com número de versão opcional; ligado: ` | v2.6 [Chat Unblocker]`, desligado: ` [Chat Unblocker]`
 - 📋 **Menu de cópia Fluent** — passe o mouse sobre a mensagem para o ícone de cópia; clique = copiar texto, hover = menu (apenas texto / tudo / nome)
-- 🌍 **Suporte i18n completo** — menu e todos os rótulos em 10 idiomas
+- 🌍 **Suporte i18n completo** — menu e todos os rótulos em 12 idiomas
 - 🎬 **Animações Microsoft Fluent** — curvas Bézier elásticas, detecção de velocidade, pulsação ao clicar, rastreamento ao redimensionar
 - 🐛 **Visibilidade da seleção de texto** — seleção: fundo verde + texto preto
 - 🔧 **Detecção dinâmica do chat** — `CB.chatBody` + fallback `CB.chat`
@@ -751,11 +892,210 @@ O chat do TankTrouble.com bloqueia caracteres não-ASCII. Esta extensão codific
 
 ---
 
+## Tiếng Việt
+
+### Mô tả
+Chat của TankTrouble.com chặn ký tự không phải ASCII — tiếng Trung, Nhật, Hàn, Ả Rập, emoji… đều bị máy chủ từ chối. Tiện ích này mã hóa Unicode thành chuỗi `~XXXX` an toàn ASCII trước khi gửi, và tự giải mã khi nhận.
+
+### Tính năng
+- 🌍 Hỗ trợ mọi hệ chữ viết (CJK, Ả Rập, Kirin, Thái, Hindi, emoji, ký hiệu đặc biệt)
+- 🔐 Xáo trộn XOR để né bộ lọc từ nhạy cảm
+- ⏱ Tự khôi phục giao diện khi máy chủ không gửi biên nhận
+- 🎛 Bảng popup đa ngôn ngữ (12 ngôn ngữ)
+- 🧲 Chọn nhiều & sao chép hàng loạt — vòng tròn chọn, xem trước vùng chọn, thanh công cụ nổi
+- ✍️ Người chơi chưa cài tiện ích sẽ thấy dấu `[Chat Unblocker]`
+
+### Có gì mới trong v3.1.0
+- 🚨 **Bản phát hành lớn — chỉ v3.1.0 trở lên hoạt động**: bản cập nhật game ngày 2026-10-09 đã xóa các giao diện mà mọi phiên bản cũ dựa vào; toàn bộ v2.10.x trở về trước đều không còn dùng được. Hãy cập nhật ngay
+- 🇻🇳 **Thêm tiếng Việt** — giao diện, menu sao chép và tài liệu nay hỗ trợ đủ 12 ngôn ngữ
+- 🇧🇩 **Thêm tiếng Bengal** — giao diện, menu sao chép và tài liệu nay hỗ trợ đủ 12 ngôn ngữ
+- 📌 **Hoạt động trên mọi trang — không cần tải lại** — khung chat là thành phần toàn cục nên tiện ích cũng chạy trên trang diễn đàn; việc chuyển trang (diễn đàn ↔ game) được áp dụng tự động
+- 🔧 **Tương thích với bản viết lại của game (2026-10-09)** — game không còn lộ `window.TankTrouble`: ChatBox bị niêm phong trong closure IIFE của esbuild **với hệ thống sự kiện riêng** (không một tham chiếu `EventTarget` nào trong gói), nên không thể hook API gốc. Nhưng DOM chat không đổi, và cả việc vẽ tin nhắn lẫn đo độ rộng chữ đều đi qua cùng một phương thức prototype của SVG.js — `text(x, y, value, settings)`. Tiện ích hook phương thức đó và giải mã **trước khi vẽ/đo**; phía gửi mã hóa bằng cách chặn `keydown` ở pha capture **cấp document** (gắn listener vào chính ô nhập sẽ thua cuộc — handler của game đăng ký trước và sẽ đọc văn bản chưa mã hóa), rồi `_parseChat()` của game đọc qua `chatInput.val()`
+- 🩺 **Nhật ký chẩn đoán** — console in `[TT] jQuery SVG hook armed @document_start` khi jQuery + plugin SVG của game sẵn sàng, `[TT] SVG text hook installed` khi hook giải mã gắn xong; bộ chặn gửi in `[TT] DOM sender armed` khi gắn xong (mỗi tin gửi mã hóa còn in `[TT] sender: encoded …`). Nếu không thấy gì, hãy chắc rằng tiện ích đã được tải lại sau khi cập nhật
+- 🐛 **Sửa văn bản sao chép bị lặp** — bản game mới vẽ mỗi đoạn chữ hai lần (lớp viền `fill="none"` + lớp tô), nên đọc `textContent` cho ra gấp đôi (`Tên:Tên:nội dungnội dung`). Sao chép/xuất nay loại lớp viền trước; tên người gửi được nhận diện qua class SVG mới (`{playerId}-messageUsername`), công tắc "kèm tên người gửi" hoạt động trở lại
+- 🐛 **Sửa công tắc mã hóa không làm mới lịch sử** — tin nhắn do SVG vẽ, văn bản mã hóa gốc không còn trong DOM nên không thể hoàn nguyên tại chỗ; tiện ích nay kích hoạt `_refreshChat()` của chính game (vẽ lại toàn bộ từ mảng tin nhắn — nhờ đó hook giải mã chạy lại) qua callback của tay nắm resize, kèm phương án dự phòng đóng/mở cửa sổ chat
+- 🐛 **Sửa lỗi bộ chặn gửi "chết" ngẫu nhiên (tiếng Trung lúc gửi được, lúc không)** — bản cũ chỉ gắn listener nếu ô nhập đã tồn tại lúc dò tìm; nếu game chưa tạo ô nhập thì listener không bao giờ được gắn trong khi vòng dò đã dừng và sự kiện đánh thức không có ai phát — lỗi kéo dài đến khi tải lại trang (tiếng Anh không bị ảnh hưởng vì không cần mã hóa). Nay việc gắn được ủy thác cho document (quyết định theo mục tiêu sự kiện, không cần tham chiếu ô nhập) và vòng dò thử lại ở tần số thấp vô thời hạn
+- 🐛 **Sửa lỗi thừa ký tự xuống dòng và ký tự bị cắt nát ở chỗ ngắt dòng** — bản sao chép không còn chèn ký tự xuống dòng mà người gửi không hề gõ, và các tin nhắn dài bị ngắt dòng cắt giữa chuỗi mã hóa nay giải mã đúng (bộ dựng hình nối lại hai nửa bị cắt cứng)
+
+### Có gì mới trong v2.10.1
+- 🐛 **Sửa lỗi cắt âm thầm khi sao chép** — khi sao chép nhiều tin, văn bản nối có thể vượt giới hạn ghi clipboard (~4MB, đôi khi thấp hơn) và bị cắt âm thầm. Văn bản dài nay tự chuyển sang kênh đồng bộ `textarea+execCommand` (không giới hạn dung lượng); nếu mọi đường đều thất bại, thanh/nút **nhấp nháy đỏ** thay vì giả vờ thành công.
+- 🗂 **Thêm「Xuất thành TXT」** — nút ⬇ trên thanh chọn nhiều tải các tin đã chọn thành tệp `chat-export-<dấu thời gian>.txt`, đi đường tải tệp hoàn toàn bỏ qua clipboard, không mất tin nào.
+
+### Có gì mới trong v2.10
+- 🧲 **Chọn nhiều & sao chép hàng loạt** — di chuột qua tin nhắn sẽ hiện vòng tròn chọn bên trái; nhấp để chọn (nền xanh + vạch xanh bên trái, chuyển mượt giữa xem trước↔đã chọn). Trong chế độ hàng loạt, di chuột qua vòng tròn khác sẽ xem trước cả khoảng từ lần chọn trước đến con trỏ (xanh nhạt), nhấp một lần chọn cả khoảng. Thanh công cụ nổi: sao chép / bật-tắt tên người gửi / bật-tắt hàng loạt / xóa
+- 🛡 **Né thanh cuộn bên trái** — thanh cuộn tùy chỉnh của game nằm bên trái danh sách; vòng tròn + nút sao chép tự dò lúc chạy và giữ khoảng cách một vòng tròn, thanh cuộn vẫn kéo được
+- 🌊 **Chuyển động hover mượt** — nút/vòng tròn trượt giữa các tin theo ease-out; khi cuộn chúng bám theo dòng hiện tại không rung; vòng tròn thường trú đồng bộ từng khung hình
+- 🎡 **Cải tiến bộ chọn ngôn ngữ** — bộ chọn dạng bánh xe (cuộn tự do + hít, một nấc = một mục), mờ dần ở mép; đổi ngôn ngữ làm chiều cao các dòng chuyển động và cả bảng chảy sang bố cục mới
+- 🧲 **Giao diện nổi theo vật lý + máy trạng thái hover hợp nhất** — khi kéo thanh chat, các phần tử nổi bám theo bằng vật lý lò xo rAF; mọi quyết định đi qua một `applyHover()` duy nhất
+
+### Có gì mới trong v2.9
+- 🌐 **Mở rộng trang gương** — `beta.tanktrouble.com` nay cùng `cdn.tanktrouble.com` dưới công tắc gương; mô tả rút gọn thành "trang có tiền tố cdn. và beta."
+- 🐛 **Sửa hồi quy công tắc mã hóa** — khôi phục fallback `setTimeout` cho `_raw`, công tắc đổi qua lại đáng tin cậy (hồi quy từ v2.5)
+- 🐛 **Tương thích @nhắc tên** — `.username` và `<a>` bị loại khỏi `user-select: text`, tiện ích sao chép không còn phá @
+- 🐛 **Khởi tạo người dùng mới** — content.js chủ động xin `init` từ bridge; `matches` phủ `*.tanktrouble.com`, `www.`/`beta.` cũng chạy
+- 📄 **Cài đặt/cập nhật/FAQ** — chuyển sang [docs/INSTALL.md](docs/INSTALL.md)
+
+### Có gì mới trong v2.8
+- 🪞 **Công tắc trang gương** — cải tiến công tắc gương và nhắc cập nhật; nhắc biến mất sau khi cập nhật; sửa hoạt ảnh khi bật/tắt nhanh
+- 🎨 **Trải nghiệm hình ảnh** — menu thả xuống tùy chỉnh, kiểu nút, hoạt ảnh cảnh báo
+
+### Có gì mới trong v2.7
+- 🌐 **Thông báo lỗi tốt hơn** — cải thiện văn bản lỗi khi @nhắc người không tồn tại
+- 🖱️ **Cải tiến UX menu sao chép** — độ trễ ẩn 500ms; vùng nhận diện mở rộng với padding vô hình để xóa khoảng trống icon↔menu; menu chỉ đóng khi chuột thật sự rời
+- 🔩 **Sửa bố cục bảng** — chữ dài ở dòng Định dạng xuống dòng không đẩy bộ chọn; liên kết chia sẻ hợp nhất về gốc kho
+- 🐛 **Sửa sao chép tên** — sao chép tên người chơi bỏ dấu hai chấm và khoảng trắng cuối
+- 🎨 **Tinh chỉnh tooltip** — tooltip icon rút gọn thành「Sao chép tin nhắn」
+
+### Có gì mới trong v2.6
+- 🎛 **Bật/tắt số phiên bản** — chữ ký kèm số phiên bản tùy chọn; bật: ` | v2.6 [Chat Unblocker]`, tắt: ` [Chat Unblocker]`
+- 📋 **Menu sao chép Fluent** — di chuột qua tin nhắn để hiện icon sao chép; nhấp = sao chép văn bản, hover = menu (chỉ văn bản / tất cả / tên)
+- 🌍 **Hỗ trợ i18n đầy đủ** — menu và mọi nhãn bằng 12 ngôn ngữ
+- 🎬 **Hoạt ảnh Microsoft Fluent** — đường cong Bézier đàn hồi, nhận biết tốc độ, nhấp nháy khi nhấp, bám theo khi đổi kích thước
+- 🐛 **Hiển thị vùng chọn văn bản** — chọn: nền xanh + chữ đen
+- 🔧 **Dò chat động** — `CB.chatBody` + fallback `CB.chat`
+
+### Có gì mới trong v2.5
+- 🐛 **Sửa lỗi bật/tắt tin đầu tiên** — tin nhắn đầu tiên nhận được nay đổi đúng giữa nội dung giải mã và văn bản mã hóa gốc
+- 🐛 **Sửa lặp văn bản khi nhấp đúp** — nhấp nhanh nút bật/tắt không còn nhân đôi văn bản tin nhắn
+- 🐛 **Sửa lưu trạng thái tin nhắn** — mọi tin nhắn nay giữ trạng thái hiển thị đáng tin cậy
+- 🏷️ **Khôi phục định dạng chữ ký** — trở lại `[Chat Unblocker]` không kèm số phiên bản
+- 🔄 **Cập nhật nhãn định dạng** — tùy chọn V2.x và V1.2 trong bảng cài đặt
+- 🌐 **Nhãn ngôn ngữ trang** — nhãn "Ngôn ngữ trang" mới phía trên bộ chọn ngôn ngữ
+
+### Có gì mới trong v2.2
+- ✅ **Tương thích V1.2** — tự phát hiện và giải mã tin nhắn `\uXXXX` cũ
+- 🔄 **Bộ chọn định dạng** — chọn V2.2 (`~XXXX`) hoặc V1.2 (`\uXXXX`)
+- ⚠️ **Cảnh báo V1.2** — một số tổ hợp V1.2 có thể bị máy chủ chặn
+- 🏷️ **Chữ ký phiên bản** — tin nhắn bắt đầu bằng `[Chat Unblocker V2.2]`
+- 🌐 **Nhãn V1.2** — tin nhắn cũ hiển thị `[Định dạng V1.2]`（i18n）
+
+### Cài đặt
+1. Tải kho mã nguồn này
+2. Mở `chrome://extensions/`
+3. Bật Chế độ nhà phát triển → Tải tiện ích chưa đóng gói
+
+---
+
+## বাংলা
+
+### বিবরণ
+TankTrouble.com-এর চ্যাট non-ASCII অক্ষর ব্লক করে — চীনা, জাপানি, কোরীয়, আরবি, ইমোজি ইত্যাদি সব সার্ভার প্রত্যাখ্যান করে। এই এক্সটেনশন পাঠানোর আগে Unicode-কে ASCII-নিরাপদ `~XXXX` সিকোয়েন্সে এনকোড করে, আর পাওয়ার সময় স্বয়ংক্রিয়ভাবে ডিকোড করে ফিরিয়ে আনে।
+
+### ফিচার
+- 🌍 সব লিপি ব্যবস্থা (CJK, আরবি, সিরিলিক, থাই, হিন্দি, বাংলা, ইমোজি, বিশেষ চিহ্ন)
+- 🔐 XOR স্ক্র্যাম্বলিং — সংবেদনশীল-শব্দ ফিল্টার এড়ায়
+- ⏱ সার্ভার রসিদ না দিলে UI স্বয়ংক্রিয়ভাবে ফিরে আসে
+- 🎛 বহুভাষিক পপআপ প্যানেল (12 ভাষা)
+- 🧲 মাল্টি-সিলেক্ট ও ব্যাচ কপি — চেক সার্কেল, প্রিভিউসহ রেঞ্জ সিলেকশন, ফ্লোটিং টুলবার
+- ✍️ এক্সটেনশন না থাকা খেলোয়াড়রা `[Chat Unblocker]` ট্যাগ দেখতে পায়
+
+### v3.1.0-এ নতুন
+- 🚨 **মেজর রিলিজ — শুধু v3.1.0+ কাজ করে**: 2026-10-09-এর গেম আপডেট পুরোনো সব সংস্করণের নির্ভরশীল ইন্টারফেস সরিয়ে দিয়েছে; v2.10.x পর্যন্ত সব অকার্যকর। দয়া করে আপডেট করুন
+- 🇻🇳 **ভিয়েতনামি যুক্ত** — UI, কপি মেনু ও ডকুমেন্টেশন এখন 12 ভাষায়
+- 🇧🇩 **বাংলা যুক্ত** — UI, কপি মেনু ও ডকুমেন্টেশন এখন 12 ভাষায়
+- 📌 **সব পেজে কাজ করে — রিফ্রেশ লাগে না** — চ্যাট বক্স সর্বত্র উপস্থিত গ্লোবাল কম্পোনেন্ট, তাই এক্সটেনশন ফোরাম পেজেও চলে; পেজ বদল (ফোরাম ↔ গেম) স্বয়ংক্রিয়ভাবে প্রযোজ্য হয়
+- 🔧 **গেম রিরাইট সামঞ্জস্য (2026-10-09)** — গেম আর `window.TankTrouble` প্রকাশ করে না: ChatBox esbuild IIFE ক্লোজারে বন্দী **নিজস্ব ইভেন্ট সিস্টেমসহ** (বান্ডলে `EventTarget` রেফারেন্স শূন্য), তাই নেটিভ-API হুকিং পৌঁছায় না। তবে চ্যাট DOM অপরিবর্তিত, আর বার্তা রেন্ডারিং ও টেক্সট প্রস্থ মাপ — দুটোই একই SVG.js প্রোটোটাইপ পদ্ধতি `text(x, y, value, settings)` দিয়ে যায়। এক্সটেনশন সেটি হুক করে **রেন্ডার/মাপের আগেই** ডিকোড করে (তাই লেআউট ও প্রদর্শিত টেক্সট মিলে যায়); পাঠানোর দিকে **document** ধাপের capture ফেজে `keydown` ধরে এনকোড করা হয় (ইনপুটে সরাসরি লাগালে গেমের আগে নিবন্ধিত হ্যান্ডলার এনকোড-হওয়া আগের টেক্সট পড়ে ফেলত), গেমের `_parseChat()` সেটি `chatInput.val()` দিয়ে পড়ে
+- 🩺 **নিদর্শন লগ** — গেমের jQuery + SVG প্লাগিন প্রস্তুত হলে কনসোলে `[TT] jQuery SVG hook armed @document_start` ছাপে, ডিকোড হুক লাগলে `[TT] SVG text hook installed` ছাপে; সেন্ড ইন্টারসেপ্টর লাগলে `[TT] DOM sender armed` ছাপে (প্রতি এনকোডেড পাঠানোয় `[TT] sender: encoded …`-ও আসে)। কোনোটিই না দেখলে নিশ্চিত হন আপডেটের পর এক্সটেনশন রিলোড করা হয়েছে
+- 🐛 **কপিতে ডুপ্লিকেট টেক্সট ঠিক** — নতুন বিল্ড প্রতিটি টেক্সট অংশ দুবার আঁকে (`fill="none"` স্ট্রোক লেয়ার + ফিল লেয়ার), তাই সাধারণ `textContent` পড়লে সব দ্বিগুণ আসত (`নাম:নাম:বার্তাবার্তা`)। কপি/এক্সপোর্ট এখন স্ট্রোক লেয়ার বাদ দেয়, আর প্রেরকের নাম নতুন SVG ক্লাস (`{playerId}-messageUsername`) দিয়ে চেনে — "প্রেরকের নাম রাখুন" টগল আবার কাজ করে
+- 🐛 **এনকোড টগলে হিস্টরি রিফ্রেশ না হওয়া ঠিক** — বার্তা SVG দিয়ে রেন্ডার হয়, মূল এনকোডেড টেক্সট DOM-এ থাকে না, তাই জায়গামতো ফেরানো অসম্ভব; এক্সটেনশন এখন resize-হ্যান্ডল কলব্যাকের মাধ্যমে গেমের নিজের `_refreshChat()` চালু করে (যা বার্তা অ্যারে থেকে সব পুনরায় রেন্ডার করে — ফলে ডিকোড হুক আবার চলে), চ্যাট বন্ধ/খোলা সাইকেল ফলব্যাক হিসেবে
+- 🐛 **কপি/এক্সপোর্টে নতুন লাইন ও মোড়া লাইনের গারবল ঠিক** — কপি করা টেক্সটে প্রেরক টাইপ না করা লাইন-ব্রেক আর বসে না, আর লাইন মোড়ার ফলে এনকোডিং-এর মাঝখানে কাটা লম্বা বার্তা এখন সঠিকভাবে ডিকোড হয় (রেন্ডারার জোর করে কাটা দুই অর্ধেক আবার জোড়া দেয়)
+- 🐛 **সেন্ড-হুকের অনিয়মিত মৃতাবস্থা ঠিক (চীনা কখনো যায়, কখনো যায় না)** — আগের ইমপ্লিমেন্টেশন probe-এর মুহূর্তে ইনপুট উপস্থিত হলেই শুধু ইন্টারসেপ্টর লাগাত; না হলে সেটি কখনো লাগত না অথচ polling থেমে যেত ও wake-up ইভেন্টের কোনো প্রেরক না থাকত — ফলে পেজ রিলোড না করা পর্যন্ত ভাঙা থাকত (ইংরেজি অবাধিত, কারণ তার এনকোডিং দরকার নেই)। এখন লাগানো document-ডিলিগেটেড (ইভেন্ট টার্গেট অনুযায়ী সিদ্ধান্ত, ইনপুট রেফারেন্স ছাড়াই) আর polling অনির্দিষ্টকাল কম ফ্রিকোয়েন্সিতে চেষ্টা চালিয়ে যায়
+
+### v2.10.1-এ নতুন
+- 🐛 **নীরব কপি-কাট ঠিক** — অনেক বার্তা কপি করলে সংযুক্ত টেক্সট ক্লিপবোর্ড লেখার সীমা (~4MB, কখনো কম) পেরিয়ে নীরবে কাটতে পারত। লম্বা টেক্সট এখন স্বয়ংক্রিয়ভাবে `textarea+execCommand` সিঙ্ক চ্যানেলে (আকারসীমা নেই) যায়; যেকোনো পথ ব্যর্থ হলে টুলবার/বাটন **লাল ঝলমল** করে, সাফল্যের ভান করে না।
+- 🗂 **«TXT হিসেবে এক্সপোর্ট» যুক্ত** — মাল্টি-সিলেক্ট টুলবারের ⬇ বোতাম নির্বাচিত রেকর্ড `chat-export-<timestamp>.txt` ফাইল নামিয়ে দেয় — ক্লিপবোর্ড পুরোপুরি এড়ায়, কোনো বার্তা হারায় না।
+
+### v2.10-এ নতুন
+- 🧲 **মাল্টি-সিলেক্ট ও ব্যাচ কপি** — বার্তার উপর হোভার করলে বাঁ দিকে চেক সার্কেল আসে; ক্লিক = সিলেক্ট (সবুজ হাইলাইট + বাঁ-প্রান্তের সবুজ রেখা, প্রিভিউ↔সিলেক্টড মসৃণ ট্রানজিশন)। ব্যাচ মোডে অন্য সার্কেলে হোভার করলে শেষ সিলেকশন থেকে কার্সর পর্যন্ত পুরো রেঞ্জ প্রিভিউ হয় (হালকা সবুজ), এক ক্লিকে পুরো রেঞ্জ সিলেক্ট। ফ্লোটিং টুলবার: কপি / প্রেরকের নাম টগল / ব্যাচ টগল / ক্লিয়ার
+- 🛡 **বাঁ স্ক্রলবার এড়ানো** — গেমের কাস্টম স্ক্রলবার তালিকার বাঁ দিকে; সার্কেল + কপি বোতাম রানটাইমে তা শনাক্ত করে এক সার্কেল-প্রস্থ ফাঁকা রাখে, স্ক্রলবার টানা যায়
+- 🌊 **মসৃণ হোভার মুভমেন্ট** — বোতাম/সার্কেল বার্তার মধ্যে ease-out পিচ্ছিল করে; স্ক্রলের সময় কারেন্ট লাইনকে মসৃণভাবে তাড়া করে (জিটার নেই); স্থায়ী সার্কেল ফ্রেম-সিঙ্ক
+- 🎡 **ভাষা-নির্বাচক সংশোধন** — হুইল-ধরনের নির্বাচক (এক ঘাঁটি = এক আইটেম), ভাষা বদলালে সারির উচ্চতা অ্যানিমেট হয় — পুরো প্যানেল নতুন লেআউটে প্রবাহিত
+- 🧲 **ফিজিক্স-ভিত্তিক ফ্লোটিং UI + একক হোভার স্টেট মেশিন** — চ্যাট বার টানলে ফ্লোটিং এলিমেন্ট rAF স্প্রিং ফিজিক্সে তাড়া করে; সব সিদ্ধান্ত এক `applyHover()` দিয়ে
+
+### v2.9-এ নতুন
+- 🌐 **মিরর সাইট প্রসার** — `beta.tanktrouble.com` এখন `cdn.tanktrouble.com`-এর সঙ্গে মিরর টগলের আওতায়; বিবরণ সংক্ষেপ "cdn. ও beta. উপসর্গের সাইট"
+- 🐛 **এনকোড টগল রিগ্রেশন** — `_raw`-এর `setTimeout` ফলব্যাক ফিরে এসেছে, টগল নির্ভরযোগ্যভাবে বদলায় (v2.5 থেকে রিগ্রেশন)
+- 🐛 **@mention সামঞ্জস্য** — `.username`/`<a>` কে `user-select: text` থেকে বাদ, কপি-এক্সটেনশন আর @ ক্লিক ভাঙে না
+- 🐛 **নতুন ব্যবহারকারী init** — content.js bridge-এ `init` চায়; `matches` `*.tanktrouble.com` ঢাকে, `www.`/`beta.`-ও চলে
+- 📄 **ইনস্টল/আপডেট/FAQ** — [docs/INSTALL.md](docs/INSTALL.md)-এ সরানো
+
+### v2.8-এ নতুন
+- 🪞 **মিরর সাইট টগল** — মিরর সুইচ ও রিফ্রেশ টোস্ট সংস্কার; রিফ্রেশের পর টোস্ট মিলিয়ে যায়; দ্রুত টগলে অ্যানিমেশন ঠিক
+- 🎨 **ভিজ্যুয়াল অভিজ্ঞতা** — কাস্টম ড্রপডাউন, বোতাম স্টাইল, সতর্কতা অ্যানিমেশন
+
+### v2.7-এ নতুন
+- 🌐 **উন্নত এরর বার্তা** — অনুপস্থিত ব্যবহারকারীকে @ করলে এরর টেক্সট উন্নত
+- 🖱️ **কপি মেনু UX** — হাইড-ডিলে 500ms; অনাদৃশ্য padding দিয়ে প্রসারিত শনাক্ত-এলাকা, আইকন↔মেনুর ফাঁক বাতিল; মেনু শুধু সত্যিই বের হলে বন্ধ
+- 🔩 **প্যানেল লেআউট ঠিক** — ফরম্যাট সারির লম্বা টেক্সট নির্বাচককে ঠেলে দেয় না; শেয়ারড লিঙ্ক রিপো-রুটে একীভূত
+- 🐛 **নাম কপি ঠিক** — খেলোয়াড়ের নাম কপিতে শেষ কোলন/স্পেস বাদ
+- 🎨 **টুলটিপ পলিশ** — আইকনের টুলটিপ সরল «বার্তা কপি করুন»
+
+### v2.6-এ নতুন
+- 🎛 **সংস্করণ-নম্বর টগল** — স্বাক্ষরে বদলযোগ্য সংস্করণ নম্বর; চালু: ` | v2.6 [Chat Unblocker]`, বন্ধ: ` [Chat Unblocker]`
+- 📋 **Fluent কপি মেনু** — বার্তায় হোভারে কপি আইকন; ক্লিক = টেক্সট কপি, হোভার = মেনু (শুধু টেক্সট / সব / নাম)
+- 🌍 **সম্পূর্ণ i18n** — মেনু ও সব লেবেল 12 ভাষায়
+- 🎬 **Microsoft Fluent অ্যানিমেশন** — ইলাস্টিক কিউবিক-বেজিয়ার, ভেলোসিটি-অ্যাওয়্যার, ক্লিকে পালস, রিসাইজে ট্রেসিং
+- 🐛 **টেক্সট-সিলেকশন দৃশ্যমানতা** — সিলেকশনে সবুজ পট + কালো টেক্সট
+- 🔧 **ডাইনামিক চ্যাট শনাক্ত** — `CB.chatBody` + ফলব্যাক `CB.chat`
+
+### v2.5-এ নতুন
+- 🐛 **প্রথম বার্তার টগল বাগ** — প্রাপ্ত প্রথম বার্তা এখন সঠিকভাবে ডিকোড↔কাঁচা এনকোড বদলায়
+- 🐛 **ডাবল-ক্লিকে টেক্সট ডুপ** — দ্রুত টগল ক্লিকে বার্তার টেক্সট দ্বিগুণ হয় না
+- 🐛 **বার্তা-স্টেট persist** — সব বার্তা এখন নির্ভরযোগ্যভাবে প্রদর্শন-অবস্থা ধরে রাখে
+- 🏷️ **স্বাক্ষর ফরম্যাট ফেরত** — `[Chat Unblocker]` সংস্করণ-নম্বর ছাড়া আগের মতো
+- 🔄 **ফরম্যাট লেবেল** — সেটিংস প্যানেলে V2.x ও V1.2 অপশন
+- 🌐 **পেজ-ভাষা লেবেল** — ভাষা-নির্বাচকের উপরে নতুন "পৃষ্ঠার ভাষা" লেবেল
+
+### v2.2-এ নতুন
+- ✅ **V1.2 সামঞ্জস্য** — পুরোনো `\uXXXX` বার্তা স্বয়ংক্রিয় শনাক্ত ও ডিকোড
+- 🔄 **ফরম্যাট নির্বাচক** — V2.2 (`~XXXX`) বনাম V1.2 (`\uXXXX`)
+- ⚠️ **V1.2 সতর্কতা** — কিছু V1.2 সংমিশ্রণ সার্ভার ব্লক করতে পারে
+- 🏷️ **সংস্করণ স্বাক্ষর** — বার্তা `[Chat Unblocker V2.2]` দিয়ে শুরু
+- 🌐 **V1.2 লেবেল** — পুরোনো বার্তায় `[V1.2 ফরম্যাট]` দেখায় (i18n)
+
+### ইনস্টল
+1. এই রিপো ডাউনলোড করুন
+2. `chrome://extensions/` খুলুন
+3. ডেভেলপার মোড → Load unpacked → ফোল্ডার বেছে নিন
+
+---
+
 ## License
 
 MIT © 2026 L_Shy_P
 
 ## Changelog / 更新日志
+
+> ⛔ **All versions before v3.1.0 are no longer usable** — the 2026-10-09 TankTrouble update removed the interfaces they depend on. Only v3.1.0+ works.
+> ⛔ **v3.1.0 之前的所有版本均已失效** — 2026-10-09 的 TankTrouble 更新移除了它们依赖的接口，仅 v3.1.0 及以后可用。
+
+### v3.1.0 — 2026-10-13
+
+**Major — update required / 大版本——必须更新：**
+- 🚨 **Only v3.1.0+ works** — all older builds broke with the 2026-10-09 game update; update now. 🇻🇳 **Vietnamese added** — UI, copy menu and docs in 12 languages
+- 🚨 **仅 v3.1.0+ 可用** — 2026-10-09 游戏更新使全部旧版本失效，请立即更新。🇻🇳 **新增越南语**——界面、复制菜单与文档支持 12 种语言
+- 🇧🇩 **Bengali added** — UI, copy menu and docs now support 12 languages
+- 🇧🇩 **新增孟加拉语** — 界面、复制菜单与文档现支持 12 种语言
+- 📌 **Full-site coverage — no refresh needed** — the chat box is a global component; the extension now runs on the forum page too, and page switches (forum ↔ game) apply automatically
+- 📌 **全站生效、无需刷新** — 聊天框为全局组件；扩展现在在论坛页同样运行，论坛 ↔ 游戏等页面切换自动生效
+
+**Game rewrite compatibility / 游戏大改适配：**
+- 🔧 **TankTrouble no longer exposes `window.TankTrouble`** — ChatBox is sealed inside an esbuild IIFE closure with a custom event system, so native-API hooking cannot reach it. The extension now hooks the shared SVG.js prototype method that both renders message text and measures its width (`text(x, y, value, settings)`), decoding before render so layout and content agree; sending is encoded by intercepting `keydown` in the capture phase **at the document level** (a listener on the input itself would lose the race against the game's earlier-registered handler)
+- 🔧 **TankTrouble 不再暴露 `window.TankTrouble`** — ChatBox 被封在 esbuild IIFE 闭包内并使用自定义事件系统，劫持原生 API 无法触及。本扩展改为劫持 SVG.js 原型的文字方法（渲染与宽度测量共用 `text(x, y, value, settings)`），在渲染前解码使布局与内容一致；发送侧在 **document** 捕获阶段拦截 `keydown` 完成编码（绑在输入框自身上会晚于游戏自己的处理器，游戏先读到未编码文本导致中文被拒收）
+- 🐛 **Fixed duplicated copy text & encoding-toggle refresh** — SVG text is drawn twice (stroke layer + fill layer), so extraction now strips the stroke layer and recognises sender names via the new `{playerId}-messageUsername` class; toggling the encoding switch re-renders history by triggering the game's own `_refreshChat()`
+- 🐛 **修复复制文本重复与编码开关刷新** — SVG 文字渲染两遍（描边层 + 填充层），提取时先剔除描边层，并用新版 `{playerId}-messageUsername` 类名识别发送者；切换编码开关时触发游戏自身的 `_refreshChat()` 重绘历史消息
+- 🐛 **Fixed intermittent send-interception failure** — arming used to depend on the chat input already existing at probe time; otherwise the keydown interceptor was never attached and no retry path remained (polling had stopped; the wake-up event had no dispatcher), so Chinese sending stayed broken until a page reload. Arming is now document-delegated and polling retries indefinitely
+- 🐛 **修复发送拦截偶发失效** — 旧挂载依赖"探测时输入框已存在"；否则拦截器不挂载且无任何重试通道（轮询已停、唤醒事件无人派发），中文发送会一直失效到刷新页面。现改为 document 委托式挂载，轮询无限期重试
+- 🐛 **Fixed copy/export newlines & wrapped-line garble** — copied text no longer inserts line breaks the sender never typed, and long messages split mid-encoding by wrapping now decode correctly (the renderer stitches the hard-split halves back together)
+- 🐛 **修复复制换行与折行乱码** — 复制不再插入发送者没打过的换行符；被折行从编码中间切断的长消息现可正确解码（渲染器会把硬切的两半重新拼合）
+
+### v2.10.1 — 2026-08-29
+
+**Hotfix / 修复：**
+- 🐛 **Fixed silent copy truncation** — over-length concatenated text now switches to the `textarea+execCommand` sync channel (no size cap); any failed path flashes the toolbar/button **red** instead of silently truncating
+- 🐛 **修复静默复制截断** — 超长拼接文本自动切换 `textarea+execCommand` 同步通道（无容量上限）；任一路径失败时工具栏/按钮**闪红提示**，不再静默截断
+- 🗂 **New "Export as TXT"** — the ⬇ button in the multi-select toolbar downloads the selected records as `chat-export-<timestamp>.txt`, bypassing the clipboard entirely
+- 🗂 **新增「导出为 TXT」** — 多选工具栏 ⬇ 按钮把选中记录导出为 `chat-export-时间戳.txt`，完全绕开剪贴板
 
 ### v2.10 — 2026-08-18
 
@@ -826,8 +1166,8 @@ MIT © 2026 L_Shy_P
 - 🎛 **版本号开关** — 签名水印含可切换版本号（` | v2.6 [Chat Unblocker]`）
 - 📋 **Fluent copy menu** — hover message to reveal copy icon; 3 options (text/full/name)
 - 📋 **流畅复制菜单** — 悬停消息显示复制图标；3 选项（文本/完整/名字）
-- 🌍 **Full i18n** — copy menu and labels in 10 languages
-- 🌍 **完整 i18n** — 复制菜单和标签支持 10 语言
+- 🌍 **Full i18n** — copy menu and labels in 12 languages
+- 🌍 **完整 i18n** — 复制菜单和标签支持 12 语言
 - 🎬 **Fluent animations** — elastic cubic-bezier, velocity-aware, scale-pulse
 - 🎬 **Fluent 动画** — 弹性贝塞尔曲线、速度感知、缩放脉冲
 - 🐛 **Text selection visibility** — green background + black text on selection
@@ -930,7 +1270,7 @@ MIT © 2026 L_Shy_P
 - 🇨🇳 编码开关即时切换消息显示（不再刷新网页）+ 弹窗打开无闪烁 + 标题栏版本检测 + "稳定版"多语言化
 - 🇯🇵 エンコード切替で即時表示更新 + ポップアップ表示の改善 + バージョン検出機能 + 「安定版」多言語化
 - 🇰🇷 인코딩 토글 즉시 전환 + 팝업 깜빡임 수정 + 버전 확인 추가 + "안정판" 다국어화
-- 🇷🇺 Мгновенное переключение отображения + исправлено мерцание + проверка версий + "Стабильная" на 10 языках
+- 🇷🇺 Мгновенное переключение отображения + исправлено мерцание + проверка версий + "Стабильная" на 12 языках
 - 🇸🇦 تبديل فوري لعرض الرسائل + إصلاح وميض النافذة + فحص الإصدارات + "مستقر" متعدد اللغات
 - 🇫🇷 Basculement instantané + correction du scintillement + vérification de version + "Stable" i18n
 - 🇪🇸 Cambio instantáneo + arreglo de parpadeo + verificación de versión + "Estable" i18n
@@ -941,8 +1281,8 @@ MIT © 2026 L_Shy_P
 
 ## How to Update / 更新方法
 
-📖 See [docs/INSTALL.md](docs/INSTALL.md) for the update guide in all 10 languages.
-📖 查看 [docs/INSTALL.md](docs/INSTALL.md) 获取 10 语言的更新教程。
+📖 See [docs/INSTALL.md](docs/INSTALL.md) for the update guide in all 12 languages.
+📖 查看 [docs/INSTALL.md](docs/INSTALL.md) 获取 12 语言的更新教程。
 
 ## Links
 

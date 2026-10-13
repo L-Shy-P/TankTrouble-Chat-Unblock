@@ -1,4 +1,4 @@
-// TT Chat Unblock — MAIN world (V2.10)
+// TT Chat Unblock — MAIN world (V3.1.0)
 (function () {
   "use strict";
 
@@ -12,10 +12,50 @@
     }
   }
 
-  var VERSION = "2.10";
+  var VERSION = "3.1.0";
   var V2_VER = " | v" + VERSION;
   var V2_SIG = V2_VER + " [Chat Unblocker]";
   var V1_SIG = " [Chat Unblocker]";
+
+  // ---- 游戏对象访问器（2026-10-09 游戏重写适配·第二版）----
+  // 新架构三条实证事实：
+  //   ① ChatBox 封在 esbuild IIFE 闭包内，不挂任何全局（window 扫描无泄漏）；
+  //   ② 其事件系统是自定义实现（整包 EventTarget 引用数为 0），劫持原生 addEventListener 无效；
+  //   ③ 聊天 DOM 结构未变（#chat / .content form textarea / .body / div.chatMessage）。
+  // 因此：优先返回真实例（旧版全局 / 若能捕获），否则返回 **DOM 适配器**——
+  // 用 DOM 接口模拟扩展依赖的 ChatBox 成员，让既有 UI 逻辑（多选/复制/工具栏）原样复用。
+  function getCB() {
+    try {
+      if (window.__TT_CHATBOX__) return window.__TT_CHATBOX__;
+      var TT = window.TankTrouble;
+      if (TT && TT.ChatBox) return TT.ChatBox;   // 旧版兼容（游戏若回滚）
+      return makeDOMAdapter();
+    } catch (e) { return null; }
+  }
+
+  var _domAdapter = null;
+  function makeDOMAdapter() {
+    var chatEl = document.querySelector("#chat");
+    if (!chatEl) { _domAdapter = null; return null; }
+    if (_domAdapter && _domAdapter.chat && _domAdapter.chat[0] === chatEl) return _domAdapter;  // 高频调用：同元素复用
+    var jq = window.jQuery;
+    if (!jq) return null;
+    var inputEl = chatEl.querySelector(".content form textarea") || chatEl.querySelector("textarea");
+    var bodyEl = chatEl.querySelector(".body");
+    _domAdapter = {
+      __domAdapter: true,
+      chat: jq(chatEl),
+      chatBody: bodyEl ? jq(bodyEl) : jq(),
+      chatInput: inputEl ? jq(inputEl) : jq(),
+      messages: [],                  // 消息数据源改为 DOM（渲染/解码已由 SVG 钩子接管）
+      recipientPlayerIds: [],
+      _updateInputBackground: function () {},
+      _refreshChat: function () {    // 由 DOM 层重排替代（切换编码开关时使用）
+        try { refreshDecodedMessages(); } catch (e) {}
+      }
+    };
+    return _domAdapter;
+  }
 
   var settings = { sig: true, enc: true, fmt: "v2", lang: null, ver: true, mir: true };
   // 同步读取语言，避免异步 init 消息延迟导致显示英文
@@ -37,7 +77,9 @@
     fr: "Utilisateur introuvable",
     es: "Usuario no encontrado",
     de: "Benutzer nicht gefunden",
-    pt: "Usuário não encontrado"
+    pt: "Usuário não encontrado",
+    vi: "Không tìm thấy người dùng",
+    bn: "ব্যবহারকারী পাওয়া যায়নি"
   };
 
   var MSG_SELF = {
@@ -50,7 +92,9 @@
     fr: "Pourquoi te parles-tu à toi-même ?",
     es: "¿Por qué hablas contigo mismo?",
     de: "Warum redest du mit dir selbst?",
-    pt: "Por que falar consigo mesmo?"
+    pt: "Por que falar consigo mesmo?",
+    vi: "Sao lại tự nói chuyện với chính mình?",
+    bn: "নিজের সাথে কেন কথা বলছেন?"
   };
 
   var DUP_MSG = {
@@ -63,7 +107,9 @@
     fr: "Message répété bloqué.",
     es: "Mensaje repetido bloqueado.",
     de: "Wiederholte Nachricht blockiert.",
-    pt: "Mensagem repetida bloqueada."
+    pt: "Mensagem repetida bloqueada.",
+    vi: "Đã chặn tin nhắn trùng lặp liên tiếp.",
+    bn: "পুনরাবৃত্ত বার্তা ব্লক করা হয়েছে।"
   };
 
   var V1_LABEL = {
@@ -76,7 +122,9 @@
     fr: "[V1.2 Format] ",
     es: "[V1.2 Formato] ",
     de: "[V1.2 Format] ",
-    pt: "[V1.2 Formato] "
+    pt: "[V1.2 Formato] ",
+    vi: "[Định dạng V1.2] ",
+    bn: "[V1.2 ফরম্যাট] "
   };
 
   var MIXED_LABEL = {
@@ -89,7 +137,9 @@
     fr: "[Format Mixte] ",
     es: "[Formato Mixto] ",
     de: "[Gemischtes Format] ",
-    pt: "[Formato Misto] "
+    pt: "[Formato Misto] ",
+    vi: "[Định dạng hỗn hợp] ",
+    bn: "[মিশ্র ফরম্যাট] "
   };
 
   // ---- bridge 通信 ----
@@ -120,7 +170,7 @@
     if (now - _lastToggle < 400) return;
     _lastToggle = now;
     try {
-      var CB = window.TankTrouble && window.TankTrouble.ChatBox;
+      var CB = getCB();
       if (!CB || !CB.messages) return;
       for (var i = 0; i < CB.messages.length; i++) {
         var msg = CB.messages[i];
@@ -167,7 +217,7 @@
 
   function doReset() {
     try {
-      var CB = window.TankTrouble && window.TankTrouble.ChatBox;
+      var CB = getCB();
       if (CB && CB.chat && CB.chatInput) {
         CB.chat.removeClass("send user global");
         if (CB._updateInputBackground) CB._updateInputBackground(true);
@@ -219,6 +269,21 @@
 
   function isV2(s) { return s && /~[0-9a-fA-F]{4}/.test(s); }
   function isV1(s) { return s && /\\u[0-9a-fA-F]{4}/.test(s); }
+
+  // ---- 渲染层解码入口（2026-10-09 游戏大改适配）----
+  // 新版游戏用 SVG 渲染消息（SVG.js 原型方法 text(x,y,value,settings)），early-hook.js
+  // 已劫持该方法，在文本进入"渲染与宽度测量之前"调用本函数——因此布局（逐词测量换行）
+  // 与最终显示内容天然一致。本函数只做纯文本编解码，不依赖任何游戏对象。
+  window.__TT_DECODE__ = function (text) {
+    if (!text || typeof text !== "string") return text;
+    if (!settings.enc) return text;
+    try {
+      if (isV2(text) && isV1(text)) return stripSig(decodeV1(decodeV2(text)));
+      if (isV2(text)) return stripSig(decodeV2(text));
+      if (isV1(text)) return stripSig(decodeV1(text));
+    } catch (e) {}
+    return text;
+  };
 
   function stripSig(s) {
     if (!s) return s;
@@ -272,8 +337,8 @@
   // ---- 全局CSS：选中样式修复 + 文本换行修复 + 复制按钮样式 ----
   var style = document.createElement("style");
   style.textContent = [
-    "[data-tt-chat-body], [data-tt-chat-body] *:not(.username):not(a) { user-select: text !important; -webkit-user-select: text !important; }",
-    "[data-tt-chat-body] .username, [data-tt-chat-body] a { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }",
+    "[data-tt-chat-body], [data-tt-chat-body] *:not(.username):not([class$='-messageUsername']):not(a) { user-select: text !important; -webkit-user-select: text !important; }",
+    "[data-tt-chat-body] .username, [data-tt-chat-body] [class$='-messageUsername'], [data-tt-chat-body] a { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }",
     "[data-tt-chat-body] { overflow-x: hidden !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }",
     "[data-tt-chat-body] > div, [data-tt-chat-body] > p, [data-tt-chat-body] > td, [data-tt-chat-body] div > div, [data-tt-chat-body] td > div, [data-tt-chat-body] td > p { word-wrap: break-word !important; overflow-wrap: break-word !important; word-break: break-word !important; white-space: normal !important; max-width: 100% !important; }",
     "[data-tt-chat-body] *::selection { background: #4f8 !important; color: #000 !important; text-shadow: none !important; -webkit-text-stroke: 0px !important; -webkit-text-fill-color: #000 !important; }",
@@ -298,20 +363,44 @@
     // 选中/待选高亮层：绿色只铺在名字区域之外（名字开关关闭时 left 右移到名字右边缘，名字+冒号露出原本背景，像没选中一样）
     ".tt-row-highlight { position:absolute;top:0;bottom:0;right:0;left:0;background:rgba(77,255,136,0.25);pointer-events:none;z-index:-1;transition:left 0.3s cubic-bezier(0.16,1,0.3,1),opacity 0.3s ease,background 0.3s ease; }",
     ".tt-row-highlight.hl-preview { background:rgba(77,255,136,0.12); }",
-    // 多选工具栏（透明背景+浮空按钮，官网风格阴影）
-    ".tt-multi-bar { position:fixed;z-index:99997;opacity:0;pointer-events:none;background:transparent;display:flex;align-items:center;gap:4px;transition:opacity 0.25s ease; }",
+    // 名字排除的补块：名字行以下（第二行起）从行首铺绿（名字排除只作用于第一行）。
+    // 宽度/上边由 JS 内联给（width = 名字右缘、top = 名字行底），与主块无缝拼接。
+    ".tt-row-lower { position:absolute;left:0;bottom:0;background:rgba(77,255,136,0.25);pointer-events:none;z-index:-1;opacity:0;transition:width 0.3s cubic-bezier(0.16,1,0.3,1),opacity 0.3s ease,background 0.3s ease; }",
+    // 多选工具栏（透明背景+浮空按钮，官网风格阴影；纵向排布：计数在上、按钮行在下）
+    ".tt-multi-bar { position:fixed;z-index:99997;opacity:0;pointer-events:none;background:transparent;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:6px 10px 10px;box-shadow:0 0 0 0 rgba(77,255,136,0),0 0 14px rgba(77,255,136,0),0 0 36px rgba(77,255,136,0),0 0 60px rgba(77,255,136,0);transition:opacity 0.25s ease,box-shadow 0.25s ease; }",
     ".tt-multi-bar.show { opacity:1;pointer-events:auto; }",
-    ".tt-multi-bar .tt-mcount { padding:2px 4px;font-weight:700;font-size:12px;white-space:nowrap;color:#8f8f8f;text-shadow:0 2px 5px rgba(0,0,0,0.8),0 1px 0 rgba(0,0,0,0.35);-webkit-text-stroke:1.5px #fff;paint-order:stroke fill; }",
+    // 复制成功绿框 / 失败红框：box-shadow 多级衰减渐变发光（描边→紧贴光晕→中层→外层扩散，
+    // 从框边向外的"硬边"被逐层化开；box-shadow 不占布局 → 出现时工具栏零位移；
+    // spread 外扩 2px 画在按钮外围 → 按钮 hover 放大 8% 也盖不住框）
+    ".tt-multi-bar.tt-flash-ok { box-shadow:0 0 0 2px rgba(77,255,136,0.9),0 0 14px rgba(77,255,136,0.65),0 0 36px rgba(77,255,136,0.45),0 0 60px rgba(77,255,136,0.25); }",
+    ".tt-multi-bar.tt-flash-err { box-shadow:0 0 0 2px rgba(255,85,85,0.9),0 0 14px rgba(255,85,85,0.65),0 0 36px rgba(255,85,85,0.45),0 0 60px rgba(255,85,85,0.25); }",
+    ".tt-multi-bar .tt-mcount { padding:0 4px 2px;font-weight:700;font-size:12px;white-space:nowrap;color:#8f8f8f;text-shadow:0 2px 5px rgba(0,0,0,0.8),0 1px 0 rgba(0,0,0,0.35);-webkit-text-stroke:1.5px #fff;paint-order:stroke fill;transition:opacity 0.25s ease,transform 0.25s ease; }",
     ".tt-multi-bar .tt-mcount b { color:#4f8;font-weight:800;text-shadow:0 2px 5px rgba(0,0,0,0.8),0 0 10px rgba(77,255,136,0.85);-webkit-text-stroke:1.5px #fff;paint-order:stroke fill; }",
-    ".tt-multi-bar .tt-mbtn { width:24px;height:24px;padding:0;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:#444;background:rgba(255,255,255,0.92);border:1px solid rgba(0,0,0,0.12);box-shadow:0 4px 12px rgba(0,0,0,0.55);transition:background 0.15s,transform 0.12s,box-shadow 0.15s,color 0.15s; }",
+    ".tt-multi-bar .tt-mcount.tt-fade { opacity:0;transform:translateY(-4px); }",
+    ".tt-multi-bar .tt-mbtnrow { display:flex;align-items:center;gap:4px; }",
+    ".tt-multi-bar .tt-mbtn { width:24px;height:24px;padding:0;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:#444;background:rgba(255,255,255,0.92);border:1px solid rgba(0,0,0,0.12);box-shadow:0 4px 12px rgba(0,0,0,0.55);transition:background 0.15s,transform 0.12s,box-shadow 0.15s,color 0.15s,border-color 0.15s; }",
     ".tt-multi-bar .tt-mbtn:hover { background:#fff;transform:scale(1.08);box-shadow:0 5px 14px rgba(0,0,0,0.65); }",
     ".tt-multi-bar .tt-mbtn:active { transform:scale(0.94); }",
     ".tt-multi-bar .tt-mbtn-copy { color:#2d8f4f; }",
+    ".tt-multi-bar .tt-mbtn-export { color:#2d6f8f;margin-right:8px; }",
     ".tt-multi-bar .tt-mbtn-name { color:#666; }",
     ".tt-multi-bar .tt-mbtn-name.on { color:#2d8f4f;background:rgba(77,255,136,0.25);border-color:#2d8f4f; }",
     ".tt-multi-bar .tt-mbtn-batch { color:#8a6d1a; }",
     ".tt-multi-bar .tt-mbtn-batch.on { color:#2d8f4f;background:rgba(77,255,136,0.3);border-color:#2d8f4f; }",
-    ".tt-multi-bar .tt-mbtn-clear { color:#c44; }",
+    // 清除按钮"危险但克制"：仅红描边+红图标，不整块填充红色（避免像危险警报那样刺眼）
+    ".tt-multi-bar .tt-mbtn-clear { color:#c0392b;border-color:rgba(220,70,60,0.6);margin-left:8px; }",
+    // 按钮悬浮黑色解释气泡。外框 .tt-mtip 只负责整体透明度与位置（fixed 锚点左上角，
+    // 用 translate 做居中偏移）；内部 .tt-mtip-txt 承载文字并做淡入淡出。
+    // 切换文本时保持 DOM 复用：改内部文字 → 外框 width/height 过渡到新尺寸、transform 过渡到新位置，
+    // 文字层先淡出→换字→淡入，实现"长宽、位置丝滑 + 文字淡入淡出"。
+    ".tt-mtip { position:fixed;z-index:99998;left:0;top:0;transform:translate(0px,0px) translate(-50%,-100%);padding:4px 8px;border-radius:5px;background:rgba(24,24,24,0.94);color:#fff;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap;pointer-events:none;opacity:0;box-shadow:0 3px 10px rgba(0,0,0,0.35);transition:opacity 0.18s ease,transform 0.18s ease,width 0.2s cubic-bezier(0.16,1,0.3,1),height 0.2s cubic-bezier(0.16,1,0.3,1); }",
+    ".tt-mtip.show { opacity:1; }",
+    // 文字双 span 交叉淡入淡出：绝对定位叠放在内容区左上角（气泡尺寸由 JS 显式控制，
+    // span 不参与布局）。切换时新文字立即加 .on 淡入、旧文字同时去 .on 淡出 →
+    // 重叠衔接、透明度守恒（无真空、无叠印）。注意：显示/隐藏必须纯用 .on 类，
+    // 绝不给 span 写 inline opacity——inline 优先级会压过类的淡出，导致旧文字不消失
+    ".tt-mtip .tt-mtip-txt { position:absolute;left:8px;top:4px;opacity:0;transition:opacity 0.16s ease; }",
+    ".tt-mtip .tt-mtip-txt.on { opacity:1; }",
     // 覆盖游戏发送中斜条纹视觉（配合 removeClass 双保险；只影响发送中的输入框）
     ".chat.send input, .chat.send textarea { background-image:none !important; }",
     // 发送中转圈：SVG 画弧动画（从一点逐渐画出，头部转动、尾巴拖出、变长到常态），速度稍快
@@ -345,6 +434,17 @@
   var _batchMode = true;        // 批量选择模式（默认开启）
   var _previewRows = [];        // 当前hover预览的消息行数组
   var _statusBarEl = null;      // 多选工具栏元素（固定在输入栏上方）
+  var _tipEl = null;            // 按钮悬浮黑色解释气泡元素
+  var _tipTimer = null;         // 气泡消失延迟定时器（按钮之间切换时避免闪烁）
+  var TIP_HOST_SEL = ".tt-mbtn, .tt-copy-icon";  // 描述气泡宿主：工具栏按钮 + 消息行复制按钮
+  var TIP_SHOW_DELAY = 500;     // 首次显示延迟（对齐原生 title 的系统悬停节奏：hover ~500ms 后出现）
+  var TIP_NEAR_PX = 10;         // "缝隙保持"判定半径：宿主矩形外扩 10px（按钮间 gap 4px、图标↔圆圈 gap 4px 均覆盖）
+  var _tipShowTimer = null;     // 延迟显示挂起定时器（未显示态 hover 宿主时启动，移开/换宿主重置）
+  var _tipKeepTimer = null;     // 已显示态"缝隙保鲜"轮询（150ms：坐标离开所有宿主外扩矩形才隐藏）
+  var _statusOverride = null;   // 导出动画期间 count 文案的覆盖（避免被 updateStatusBar 覆盖回去）
+  var _statusAnim = 0;          // 状态栏淡入淡出动画进行中计数（>0 时 updateStatusBar 不抢显隐）
+  var _statusAnimToken = 0;     // 动画令牌：防止旧淡出动画覆盖新动画
+  var _flashTimer = 0;          // 绿框/红框闪烁动画定时器（连续闪烁时重置，避免旧定时器提前摘框）
   var _previewActive = false;   // 是否正在预览
   var _withNames = true;        // 复制时是否包含发消息者名字（默认包含）
   var _checkRow = null;         // 圆圈当前关联的消息行（切换动画用）
@@ -364,25 +464,29 @@
 
   var COPY_LABELS = {
     en: { icon: "\uD83D\uDCCB", copyText: "Copy text", copyName: "Copy name", copyFull: "Copy all", copied: "✓", title: "Copy message",
-          checkTitle: "Select message", copySelText: "Copy selected messages", selected: "Selected: {0}", clear: "Clear", batchOn: "Batch: ON", batchOff: "Batch: OFF", nameToggle: "Include sender names: ON" },
+          checkTitle: "Select message", copySelText: "Copy selected messages", selected: "Selected: {0}", clear: "Clear", batchOn: "Batch: ON", batchOff: "Batch: OFF", nameToggle: "Include sender names: ON", exportText: "Export as TXT", exported: "Exported {0} msgs · {1} chars" },
     zh: { icon: "\uD83D\uDCCB", copyText: "复制内容", copyName: "复制名字", copyFull: "复制整条", copied: "✓", title: "复制消息内容",
-          checkTitle: "勾选消息", copySelText: "复制选中消息", selected: "已选 {0} 条", clear: "清除", batchOn: "批量: 开", batchOff: "批量: 关", nameToggle: "包含发消息者名字：开" },
+          checkTitle: "勾选消息", copySelText: "复制选中消息", selected: "已选 {0} 条", clear: "清除", batchOn: "批量: 开", batchOff: "批量: 关", nameToggle: "包含发消息者名字：开", exportText: "导出选中为 TXT 文件", exported: "已导出 {0} 条 · {1} 字符" },
     ja: { icon: "\uD83D\uDCCB", copyText: "本文コピー", copyName: "名前コピー", copyFull: "全てコピー", copied: "✓", title: "メッセージをコピー",
-          checkTitle: "メッセージ選択", copySelText: "選択中をコピー", selected: "選択中: {0}件", clear: "クリア", batchOn: "一括: オン", batchOff: "一括: オフ", nameToggle: "送信者名を含む: オン" },
+          checkTitle: "メッセージ選択", copySelText: "選択中をコピー", selected: "選択中: {0}件", clear: "クリア", batchOn: "一括: オン", batchOff: "一括: オフ", nameToggle: "送信者名を含む: オン", exportText: "選択をTXTとして書き出す", exported: "{0}件・{1}文字を書き出し" },
     ko: { icon: "\uD83D\uDCCB", copyText: "내용 복사", copyName: "이름 복사", copyFull: "전체 복사", copied: "✓", title: "메시지 복사",
-          checkTitle: "메시지 선택", copySelText: "선택 복사", selected: "선택됨: {0}개", clear: "삭제", batchOn: "일괄: 켜짐", batchOff: "일괄: 꺼짐", nameToggle: "보낸 사람 이름 포함: 켜짐" },
+          checkTitle: "메시지 선택", copySelText: "선택 복사", selected: "선택됨: {0}개", clear: "삭제", batchOn: "일괄: 켜짐", batchOff: "일괄: 꺼짐", nameToggle: "보낸 사람 이름 포함: 켜짐", exportText: "선택 항목을 TXT로 내보내기", exported: "{0}개 · {1}자 내보냄" },
     ru: { icon: "\uD83D\uDCCB", copyText: "Копия текста", copyName: "Копия имени", copyFull: "Копия всего", copied: "✓", title: "Копировать сообщение",
-          checkTitle: "Выбрать сообщение", copySelText: "Копировать выбранные", selected: "Выбрано: {0}", clear: "Очистить", batchOn: "Пакет: ВКЛ", batchOff: "Пакет: ВЫКЛ", nameToggle: "Включать имена: ВКЛ" },
+          checkTitle: "Выбрать сообщение", copySelText: "Копировать выбранные", selected: "Выбрано: {0}", clear: "Очистить", batchOn: "Пакет: ВКЛ", batchOff: "Пакет: ВЫКЛ", nameToggle: "Включать имена: ВКЛ", exportText: "Экспорт в TXT", exported: "Экспорт: {0} сообщ. · {1} символов" },
     ar: { icon: "\uD83D\uDCCB", copyText: "نسخ النص", copyName: "نسخ الاسم", copyFull: "نسخ الكل", copied: "✓", title: "نسخ الرسالة",
-          checkTitle: "تحديد الرسالة", copySelText: "نسخ المحدد", selected: "محدد: {0}", clear: "مسح", batchOn: "دفعة: تشغيل", batchOff: "دفعة: إيقاف", nameToggle: "تضمين الأسماء: تشغيل" },
+          checkTitle: "تحديد الرسالة", copySelText: "نسخ المحدد", selected: "محدد: {0}", clear: "مسح", batchOn: "دفعة: تشغيل", batchOff: "دفعة: إيقاف", nameToggle: "تضمين الأسماء: تشغيل", exportText: "تصدير كـ TXT", exported: "تم التصدير: {0} رسالة · {1} حرف" },
     fr: { icon: "\uD83D\uDCCB", copyText: "Copier texte", copyName: "Copier nom", copyFull: "Tout copier", copied: "✓", title: "Copier le message",
-          checkTitle: "Sélectionner le message", copySelText: "Copier la sélection", selected: "Sélectionné: {0}", clear: "Effacer", batchOn: "Lot: ON", batchOff: "Lot: OFF", nameToggle: "Inclure les noms: ON" },
+          checkTitle: "Sélectionner le message", copySelText: "Copier la sélection", selected: "Sélectionné: {0}", clear: "Effacer", batchOn: "Lot: ON", batchOff: "Lot: OFF", nameToggle: "Inclure les noms: ON", exportText: "Exporter en TXT", exported: "{0} messages · {1} caractères exportés" },
     es: { icon: "\uD83D\uDCCB", copyText: "Copiar texto", copyName: "Copiar nombre", copyFull: "Copiar todo", copied: "✓", title: "Copiar mensaje",
-          checkTitle: "Seleccionar mensaje", copySelText: "Copiar selección", selected: "Seleccionado: {0}", clear: "Limpiar", batchOn: "Lote: ON", batchOff: "Lote: OFF", nameToggle: "Incluir nombres: ON" },
+          checkTitle: "Seleccionar mensaje", copySelText: "Copiar selección", selected: "Seleccionado: {0}", clear: "Limpiar", batchOn: "Lote: ON", batchOff: "Lote: OFF", nameToggle: "Incluir nombres: ON", exportText: "Exportar como TXT", exported: "Exportados: {0} mensajes · {1} caracteres" },
     de: { icon: "\uD83D\uDCCB", copyText: "Text kopieren", copyName: "Name kopieren", copyFull: "Alles kopieren", copied: "✓", title: "Nachricht kopieren",
-          checkTitle: "Nachricht auswählen", copySelText: "Auswahl kopieren", selected: "Ausgewählt: {0}", clear: "Löschen", batchOn: "Stapel: AN", batchOff: "Stapel: AUS", nameToggle: "Namen einschließen: AN" },
+          checkTitle: "Nachricht auswählen", copySelText: "Auswahl kopieren", selected: "Ausgewählt: {0}", clear: "Löschen", batchOn: "Stapel: AN", batchOff: "Stapel: AUS", nameToggle: "Namen einschließen: AN", exportText: "Als TXT exportieren", exported: "{0} Nachrichten · {1} Zeichen exportiert" },
     pt: { icon: "\uD83D\uDCCB", copyText: "Copiar texto", copyName: "Copiar nome", copyFull: "Copiar tudo", copied: "✓", title: "Copiar mensagem",
-          checkTitle: "Selecionar mensagem", copySelText: "Copiar seleção", selected: "Selecionado: {0}", clear: "Limpar", batchOn: "Lote: LIG", batchOff: "Lote: DES", nameToggle: "Incluir nomes: LIG" }
+          checkTitle: "Selecionar mensagem", copySelText: "Copiar seleção", selected: "Selecionado: {0}", clear: "Limpar", batchOn: "Lote: LIG", batchOff: "Lote: DES", nameToggle: "Incluir nomes: LIG", exportText: "Exportar como TXT", exported: "Exportado: {0} mensagens · {1} caracteres" },
+    vi: { icon: "\uD83D\uDCCB", copyText: "Sao chép văn bản", copyName: "Sao chép tên", copyFull: "Sao chép tất cả", copied: "✓", title: "Sao chép tin nhắn",
+          checkTitle: "Chọn tin nhắn", copySelText: "Sao chép tin đã chọn", selected: "Đã chọn: {0}", clear: "Xóa", batchOn: "Hàng loạt: BẬT", batchOff: "Hàng loạt: TẮT", nameToggle: "Kèm tên người gửi: BẬT", exportText: "Xuất thành TXT", exported: "Đã xuất {0} tin · {1} ký tự" },
+    bn: { icon: "\uD83D\uDCCB", copyText: "টেক্সট কপি করুন", copyName: "নাম কপি করুন", copyFull: "সব কপি করুন", copied: "✓", title: "বার্তা কপি করুন",
+          checkTitle: "বার্তা নির্বাচন করুন", copySelText: "নির্বাচিত বার্তা কপি করুন", selected: "নির্বাচিত: {0}", clear: "মুছুন", batchOn: "ব্যাচ: চালু", batchOff: "ব্যাচ: বন্ধ", nameToggle: "প্রেরকের নাম অন্তর্ভুক্ত: চালু", exportText: "TXT হিসেবে রপ্তানি করুন", exported: "{0} বার্তা · {1} অক্ষর রপ্তানি হয়েছে" }
   };
 
   function _L(key) {
@@ -392,7 +496,7 @@
   }
 
   function updateCopyLabels() {
-    if (_iconEl) { _iconEl.textContent = _L("icon"); _iconEl.title = _L("title"); }
+    if (_iconEl) { _iconEl.textContent = _L("icon"); _iconEl.setAttribute("data-tip", _L("title")); }
     if (_checkEl) _checkEl.title = _L("checkTitle");
     // 已勾选消息的常驻圆圈标题同步换语言
     for (var i = 0; i < _checkedEls.length; i++) {
@@ -407,16 +511,19 @@
   function ensureChatMarked() {
     // 已标记的chat仍在DOM → 直接成功（避免chat容器被游戏重建后失效）
     var cur = document.querySelector("[data-tt-chat-body]");
-    if (cur && cur.isConnected) return true;
+    if (cur && cur.isConnected) {
+      // hook 可能直接给 chat 打了标记（绕过本函数的标记流程），导致 initTranslateGuard 从未绑定。
+      if (!_guardBound) initTranslateGuard();
+      return true;
+    }
     _chatContainerMarked = false;
     _guardBound = false;        // 聊天容器被重建：重置翻译守卫，使其绑定到新容器
     _baseUsername = null;
     _origNameText = null;
     _translated = false;
     try {
-      var TT = window.TankTrouble;
-      if (!TT || !TT.ChatBox) return false;
-      var CB = TT.ChatBox;
+      var CB = getCB();
+      if (!CB) return false;
       var el = (CB.chatBody && CB.chatBody[0]) || (CB.chat && CB.chat[0]);
       if (el) {
         el.setAttribute("data-tt-chat-body", "1");
@@ -455,18 +562,12 @@
     var chat = getChat();
     if (!chat || !window.MutationObserver || _guardBound) return;
     _guardBound = true;
-    _baseUsername = chat.querySelector(".username");
+    _baseUsername = queryUsers(chat)[0];
     _origNameText = _baseUsername ? _baseUsername.textContent : null;
     _translated = false;
     new MutationObserver(function (mutations) {
       // 游戏/插件自身重绘期间忽略，避免误报
       if (_repainting || _suppressGuard) return;
-      // 初始化时可能还没有消息：先记录当前基准，等待真正的替换
-      if (!_baseUsername) {
-        _baseUsername = chat.querySelector(".username");
-        _origNameText = _baseUsername ? _baseUsername.textContent : null;
-        return;
-      }
       for (var i = 0; i < mutations.length; i++) {
         var m = mutations[i];
         if (m.type === "characterData") {
@@ -489,6 +590,15 @@
           }
         }
       }
+      // 兜底自愈（放在 removedNodes 判定之后，不能提前 return）：
+      // 基准是"死引用"（消息上限溢出移除旧行时，移除事件被 _suppressGuard 抑制窗口吞掉）。
+      // 若前置判断，翻译替换导致旧基准 isConnected=false 时会走"自愈"直接 return，
+      // 跳过上面 scheduleRepaint → _translated 永不置位 → 回归原文被误判"游戏自身重绘"而不重绘，@绑定永久丢失。
+      // 放到最后，让翻译替换的移除事件先走 scheduleRepaint 正确记录翻译状态。
+      if (!_baseUsername || !_baseUsername.isConnected) {
+        _baseUsername = queryUsers(chat)[0];
+        _origNameText = _baseUsername ? _baseUsername.textContent : null;
+      }
     }).observe(chat, { childList: true, subtree: true, characterData: true });
   }
 
@@ -499,13 +609,14 @@
       if (_repainting) return;
       var chat = getChat();
       if (!chat) return;
-      var nowUsername = chat.querySelector(".username");
+      var nowUsername = queryUsers(chat)[0];
       if (!nowUsername) return;
       // 元素未替换（仅文本变化已由 observer 标记处理）：无需重绘
       if (nowUsername === _baseUsername) return;
       // 新文本与原文不同 → 仍处于翻译状态（译文）：保持译文，仅推进基准，等回归原文后再恢复
       if (_origNameText !== null && nowUsername.textContent !== _origNameText) {
         _baseUsername = nowUsername;
+        _translated = true;   // 元素替换型翻译也要置位：否则回归原文时被误判"游戏自身重绘"而不重绘，@绑定永久丢失
         return;
       }
       // 新文本 == 原文：区分"游戏自身重绘"与"翻译回归"
@@ -517,7 +628,7 @@
       // 确实翻译过且已回归原文：重绘消息，恢复游戏挂载在 .username 上的@绑定
       _translated = false;
       try {
-        var CB = window.TankTrouble && window.TankTrouble.ChatBox;
+        var CB = getCB();
         if (!CB || typeof CB._refreshChat !== "function") return;
         _repainting = true;
         hideAll();           // 清理hover状态（旧行引用已失效）
@@ -527,7 +638,7 @@
       } catch (e) {}
       setTimeout(function () {
         _repainting = false;
-        _baseUsername = getChat() ? getChat().querySelector(".username") : null;
+        _baseUsername = getChat() ? queryUsers(getChat())[0] : null;
         _origNameText = _baseUsername ? _baseUsername.textContent : _origNameText;
       }, 250);
     }, 600);
@@ -562,7 +673,7 @@
       _iconEl.className = "tt-copy-icon";
       _iconEl.style.cssText = "position:fixed;z-index:99998;opacity:0;pointer-events:none;width:24px;height:24px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;border-radius:4px;cursor:pointer;background:rgba(255,255,255,0.94);color:#555;border:1px solid rgba(0,0,0,0.1);box-shadow:0 1px 4px rgba(0,0,0,0.1);";
       _iconEl.textContent = _L("icon");
-      _iconEl.title = _L("title");
+      _iconEl.setAttribute("data-tip", _L("title"));   // 弃原生 title：描述走与工具栏同款气泡（动画/样式/延迟统一）
       _iconEl.addEventListener("mouseenter", function () { showMenu(); });
       _iconEl.addEventListener("click", function (ev) { ev.stopPropagation(); copyRowText(); });
       document.body.appendChild(_iconEl);
@@ -712,8 +823,8 @@
       }
     }
     if (sbFloor > 0 && checkLeft < sbFloor) checkLeft = sbFloor;
-    // 避让.username：圆圈+复制按钮整体范围不与名字重叠
-    var users = row.querySelectorAll(".username");
+    // 避让用户名（兼容 HTML .username 与新版 SVG [class$="-messageUsername"]）：圆圈+复制按钮整体范围不与名字重叠
+    var users = queryUsers(row);
     var checkRect = { left: checkLeft - iconW - gap, top: top, right: checkLeft + checkW, bottom: top + 24 };
     for (var i = 0; i < users.length; i++) {
       var uRect = users[i].getBoundingClientRect();
@@ -905,7 +1016,9 @@
         (function (row, el) {
           c._fol = {
             el: el,
-            mass: 0.5, stiff: 0.09, damp: 0.86,
+            // 小元素弹簧：响应速度仍约 2.3 倍于工具栏（跟手、惯性小），
+            // damp 收紧到 0.70 压过冲到 ~10%（旧 0.09/0.86 会过冲 57%、来回震荡多轮=太弹）
+            mass: 0.5, stiff: 0.055, damp: 0.70,
             cx: 0, cy: 0, vx: 0, vy: 0,
             getTarget: function () {
               // 仅行真正被移除时才失效；行滚出可视区/拖出屏幕时**仍返回坐标**（跟随不断流），
@@ -1147,9 +1260,13 @@
     var hl = row.querySelector(".tt-row-highlight");
     if (!hl) return;
     hl.style.opacity = "0";
+    var lower = row.querySelector(".tt-row-lower");
+    if (lower) lower.style.opacity = "0";
     clearTimeout(hl._rmTimer);
     hl._rmTimer = setTimeout(function () {
       if (hl.style.opacity === "0") hl.remove();
+      var lo = row.querySelector(".tt-row-lower");
+      if (lo && lo.style.opacity === "0") lo.remove();
     }, 320);
   }
 
@@ -1180,27 +1297,80 @@
       var isChk = row.classList.contains("tt-row-checked");
       var isPrev = !isChk && row.classList.contains("tt-row-preview");
       if (!isChk && !isPrev) continue; // 圆圈预览等无行背景状态：跳过
+      // 记录"本轮之前主块是否已在"：区分"首次勾选入场"（主块/补块一起淡入）与
+      // "行已在显示中切开关"（补块只展开宽度，与主块 left 同步滑动）
+      var wasHighlighted = !!row.querySelector(".tt-row-highlight");
       // attachRowHighlight 内部统一同步 hl-preview（preview↔checked 背景色渐变，不瞬变）
       var hl = attachRowHighlight(row, isPrev);
+      // 老版本的 left 偏移方案（绿色高亮从名字右边缘开始铺，名字区域露出原本背景）：
+      // 不用 clip-path 挖洞——那会牵动整块形状、破坏布局观感，且过渡动画也接不上。
+      // 清掉可能残留的挖洞样式，回到纯 left 控制。
+      if (hl.style.clipPath) { hl.style.clipPath = ""; hl.style.webkitClipPath = ""; }
+      var lower = row.querySelector(".tt-row-lower");
       if (_withNames) {
         hl.style.left = "0px";
+        // 补块只收宽度、不改透明度：宽度与主块 left 同值同过渡曲线 →
+        // 切换开关时两片绿共用一条滑动的分界线，视觉始终是一整块
+        if (lower) lower.style.width = "0px";
       } else {
         var end = 0;
-        var sender = row.querySelector(".username");
+        // 新版适配：用户名选择器兼容 SVG（[class$="-messageUsername"]），
+        // 且多人消息会有多个名字元素 → 取最后一个，使 left 越过全部名字区域
+        var senders = queryUsers(row);
+        var sender = senders.length ? senders[senders.length - 1] : null;
+        var rowRect = row.getBoundingClientRect();
+        var firstBottom = 0;   // 名字行底缘（相对 row），换行补块的分界线
         if (sender) {
-          var rowRect = row.getBoundingClientRect();
           var uRect = sender.getBoundingClientRect();
           end = uRect.right - rowRect.left;
+          firstBottom = uRect.bottom - rowRect.top;
           // 名字后紧跟的冒号文本节点 → 一并纳入排除区（露出的背景保持原本状态）
           var sib = sender.nextSibling;
           if (sib && sib.nodeType === 3 && /^[\s]*[:：]/.test(sib.textContent)) {
             var r2 = document.createRange();
             r2.setStart(sib, 0);
             r2.setEnd(sib, sib.length);
-            end = r2.getBoundingClientRect().right - rowRect.left;
+            var rr = r2.getBoundingClientRect();
+            end = rr.right - rowRect.left;
+            firstBottom = Math.max(firstBottom, rr.bottom - rowRect.top);
           }
         }
-        hl.style.left = Math.max(0, Math.ceil(end)) + "px";
+        // 主块 left 与补块 width 共用同一边界值：过渡同步、分界线合一（不会出现两片绿）
+        var w = Math.max(0, Math.ceil(end)) + "px";
+        hl.style.left = w;
+        // 换行补块：名字行以下（第二行起）从行首重新铺绿——left 偏移只能作用于第一行，
+        // 否则整块矩形会把后续行开头按名字宽度一起切掉（截掉换行文字前半部分）。
+        // 判定"名字行以下真的还有文字行"——不能拿 row 高度当依据：单行消息的 row 往往比
+        // 文字底缘高出几像素行距余量，会把"名字下方的空白"误判成第二行、多出一条绿。
+        // 改为扫描行内 <text>：名字行以下存在 top 更大的文字，才算真的换行了。
+        var hasLower = false;
+        if (sender) {
+          var nameTop = uRect.top - rowRect.top;
+          var texts = row.querySelectorAll("text");
+          for (var ti = 0; ti < texts.length; ti++) {
+            var trc = texts[ti].getBoundingClientRect();
+            if (!trc.width && !trc.height) continue;
+            if (trc.top - rowRect.top > nameTop + 5) { hasLower = true; break; }
+          }
+        }
+        if (hasLower) {
+          if (!lower) {
+            lower = document.createElement("div");
+            lower.className = "tt-row-lower";
+            row.appendChild(lower);
+            // 行已在显示中切开关（wasHighlighted）：补块不淡入、只展开宽度与主块 left 同步滑动，
+            // 否则首次切换会出现"一片在动、一片在淡入"的割裂；首次勾选入场才跟主块一起淡入。
+            lower.style.opacity = wasHighlighted ? "1" : "0";
+            lower.style.width = "0px";
+            void lower.offsetWidth;   // 强制 reflow：让 0 成为宽度/透明度的过渡起点
+          }
+          lower.style.top = Math.max(0, Math.round(firstBottom)) + "px";
+          lower.style.width = w;      // 与主块 left 同值 → 分界线锁定、无缝拼接
+          lower.style.background = isPrev ? "rgba(77,255,136,0.12)" : "rgba(77,255,136,0.25)";
+          lower.style.opacity = "1";
+        } else if (lower) {
+          lower.style.width = "0px";
+        }
       }
     }
   }
@@ -1227,8 +1397,9 @@
     if (!_currentRow) return "hidden";
     if (isChecked(_currentRow)) return "hidden"; // 已选由常驻圆圈显示
     // 待选（中心绿）只在批量模式生效：批量待选=中心绿+边缘发光绿；
-    // 单选模式待选=idle+hover（仅边缘发光绿，无中心绿），用作两种模式的视觉区分
-    if (_batchMode && _previewActive && _previewRows.indexOf(_currentRow) !== -1) return "preview";
+    // 单选模式待选=idle+hover（仅边缘发光绿，无中心绿），用作两种模式的视觉区分。
+    // 另：关闭「包含发送者名字」时不显示中心绿（仅边缘绿）——与高亮层排除名字区域的语义一致。
+    if (_withNames && _batchMode && _previewActive && _previewRows.indexOf(_currentRow) !== -1) return "preview";
     return "idle";
   }
 
@@ -1281,8 +1452,8 @@
 
   function getChatInputEl() {
     try {
-      var TT = window.TankTrouble;
-      if (TT && TT.ChatBox && TT.ChatBox.chatInput && TT.ChatBox.chatInput[0]) return TT.ChatBox.chatInput[0];
+      var CB = getCB();
+      if (CB && CB.chatInput && CB.chatInput[0]) return CB.chatInput[0];
     } catch (e) {}
     return null;
   }
@@ -1294,7 +1465,9 @@
     var left = 8, top = 8;
     if (input) {
       var r = input.getBoundingClientRect();
-      left = r.left;
+      // -10 抵消 .tt-multi-bar 的 padding-left：让内容（计数文字）与输入框/消息文本左缘对齐，
+      // 绿框（box-shadow 画在 padding 外缘）自然落在文本左侧留出呼吸感
+      left = r.left - 10;
       top = r.top - bar.offsetHeight - 6;
       if (top < 4) top = r.bottom + 6;
     }
@@ -1315,14 +1488,21 @@
     var bar = getOrCreateStatusBar();
     var n = _checkedSet.length;
     if (n === 0) { bar.classList.remove("show"); return; }
-    var selText = escapeHTML((_L("selected") || "Selected: {0}")).replace("{0}", "<b>" + n + "</b>");
+    var selText = _statusOverride
+      ? _statusOverride
+      : escapeHTML((_L("selected") || "Selected: {0}")).replace("{0}", "<b>" + n + "</b>");
     bar.innerHTML =
       '<span class="tt-mcount">' + selText + '</span>' +
-      '<span class="tt-mbtn tt-mbtn-copy" data-act="copy" title="' + escapeHTML(_L("copySelText")) + '">\uD83D\uDCC4</span>' +
-      '<span class="tt-mbtn tt-mbtn-name ' + (_withNames ? "on" : "") + '" data-act="name" title="' + escapeHTML(_L("nameToggle")) + '">\uD83D\uDC64</span>' +
-      '<span class="tt-mbtn tt-mbtn-batch ' + (_batchMode ? "on" : "") + '" data-act="batch" title="' + escapeHTML(_batchMode ? _L("batchOn") : _L("batchOff")) + '">\u21C5</span>' +
-      '<span class="tt-mbtn tt-mbtn-clear" data-act="clear" title="' + escapeHTML(_L("clear")) + '">\u2715</span>';
+      '<div class="tt-mbtnrow">' +
+      '<span class="tt-mbtn tt-mbtn-copy" data-act="copy" data-tip="' + escapeHTML(_L("copySelText")) + '">\uD83D\uDCC4</span>' +
+      '<span class="tt-mbtn tt-mbtn-export" data-act="export" data-tip="' + escapeHTML(_L("exportText")) + '">\u2B07</span>' +
+      '<span class="tt-mbtn tt-mbtn-name ' + (_withNames ? "on" : "") + '" data-act="name" data-tip="' + escapeHTML(_L("nameToggle")) + '">\uD83D\uDC64</span>' +
+      '<span class="tt-mbtn tt-mbtn-batch ' + (_batchMode ? "on" : "") + '" data-act="batch" data-tip="' + escapeHTML(_batchMode ? _L("batchOn") : _L("batchOff")) + '">\u21C5</span>' +
+      '<span class="tt-mbtn tt-mbtn-clear" data-act="clear" data-tip="' + escapeHTML(_L("clear")) + '">\u2715</span>' +
+      '</div>';
     positionMultiBar();
+    // 导出反馈淡入淡出期间不抢显隐，由动画流程控制（避免被其它刷新瞬变打断）
+    if (_statusOverride) return;
     bar.classList.add("show");
   }
 
@@ -1336,66 +1516,478 @@
     else if (act === "name") { _withNames = !_withNames; updateStatusBar(); applyNameExclude(); }
     else if (act === "batch") { _batchMode = !_batchMode; clearPreview(); updateStatusBar(); scheduleHoverCheck(); }
     else if (act === "clear") clearAllChecks();
+    else if (act === "export") exportSelected();
   }, true);
 
-  // 复制选中消息：_withNames=true 含发消息者名字；false 只去掉发消息者名字+冒号，保留@提及
-  function copySelected() {
-    if (_checkedSet.length === 0) return;
+  // ---- @点击死锁保险丝 ----
+  // 游戏在用户名元素上挂的@点击绑定会先检查 chatInput.disabled，禁用时点击被无声吞掉
+  //（悬浮下划线/手型是 CSS 不受影响——表现为"悬浮正常但无法@"）。
+  // 游戏的禁用有两类：合法禁用（断线/未加入/未认证/发送中，会改 placeholder 或挂 send 锁标志）
+  // 与死锁（服务器回执丢失后无超时兜底，输入框永久锁死，直到重开消息栏）。
+  // 死锁特征 = placeholder 仍为正常文案 + disabled + 无 send 锁 —— 游戏合法路径不存在此状态组合。
+  // 此处在捕获阶段（先于游戏元素级 handler 执行）检测并解锁，让@点击立即恢复可用。
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    // 用户名元素：HTML 版 .username 或 SVG 版 <playerId>-messageUsername（两种渲染形态都兼容）
+    var nameEl = t.closest(".username");
+    if (!nameEl && t.getAttribute) {
+      var cls = t.getAttribute("class") || "";
+      if (cls.indexOf("messageUsername") !== -1) nameEl = t;
+    }
+    if (!nameEl) return;
+    var CB = getCB();
+    if (!CB || !CB.chatInput || !CB.chatInput[0]) return;
+    var input = CB.chatInput[0];
+    if (!input.disabled) return;
+    var ph = input.placeholder || "";
+    // 合法禁用的 placeholder 文案（游戏源码中的四种）——这些状态下不解锁
+    var legit = ph === "Signal lost" || ph === "Join to transmit" ||
+                ph === "Please wait" || ph === "Sign up to transmit";
+    if (legit) return;
+    // 发送中（send 锁标志仍挂着）：等服务器回执，不解锁
+    if (CB.chat && CB.chat[0] && CB.chat[0].classList.contains("send")) return;
+    // 死锁：解锁，随后执行的游戏@handler 即可正常触发
+    try {
+      CB.chatInput.prop("disabled", false);
+      console.log("[TT] unlocked stuck chat input (@click fuse)");
+    } catch (err) {}
+  }, true);
+
+  // ---- 按钮悬浮黑色解释气泡（出现/消失/文本切换全动画） ----
+  // 定位模型：.tt-mtip 永远 fixed 在 (0,0)，真实位置由 inline transform 里的
+  // translate(xpx,ypx) 偏移驱动 —— transform 在 transition 列表里（合成层），
+  // 跨按钮切换时位置丝滑滑行而非瞬跳。文本包在 .tt-mtip-txt 里做淡入淡出；
+  // 换字时先锁旧宽高 → 换字 → 用独立测量元素测新文本自然宽 → 过渡到新尺寸（长宽丝滑）。
+  var _tipAnimToken = 0; // 动画令牌：防止切换太快旧动画抢占新位置
+  var _tipMeter = null;  // 独立隐藏测量元素：测文本自然宽（不参与气泡 transition，不受父容器宽度约束）
+  // content-box 补偿：.tt-mtip 的 style.width/height 是 content-box（不含 padding）。
+  // 锁定旧尺寸时若把 offsetWidth（border-box，含 padding）直接写进 style.width，
+  // 每次切换会把 padding 重复计入内容宽 → 快速来回时逐次 +16px/+8px 级联膨胀。
+  // 所以锁定/释放一律用「offsetWidth - padding 补偿」的纯内容尺寸。
+  var _tipPadX = 16;     // 气泡左右 padding 合计（8px*2）
+  var _tipPadY = 8;      // 气泡上下 padding 合计（4px*2）
+  // 单行文本高度恒定：无论什么文案，高度都等于同一行高 + padding，锁定后不再跟随切换变化
+  var _tipFixedH = null;  // 首次显示时锁定的固定高度（content-box 内容高），后续切换沿用不重复测量
+  var _tipCurText = null; // 当前真正显示在气泡里的文本。切换时锁定宽度用它做精确测量，
+                          // 绝不读 tip.offsetWidth——元素渲染值可能正被上一次过渡污染成中间值，
+                          // 拿中间值做锁定起点会让宽度反复被拉向"中间值-16"，来回越快漂移越明显（积累观感）
+  var _tipSpans = null;   // 双文字 span [显示位, 备用位]：交叉淡入淡出（新文字立即淡入、旧文字
+                          // 同时淡出 → 重叠衔接、无真空期；快速来回时文字即时出现）
+  var _tipActive = 0;     // 当前"显示位"span 的索引（另一个是备用位，下轮放新文字淡入）
+  function tipTextSize(text) {
+    if (!_tipMeter) {
+      _tipMeter = document.createElement("span");
+      // 与 .tt-mtip 视觉参数完全一致（字体/行高/padding），空measure被 body 托管，零干扰
+      _tipMeter.style.cssText = "position:fixed;visibility:hidden;left:-99999px;top:0;pointer-events:none;white-space:nowrap;padding:4px 8px;font-size:11px;font-weight:600;line-height:1.2;";
+      document.body.appendChild(_tipMeter);
+    }
+    _tipMeter.textContent = text;
+    return { w: _tipMeter.offsetWidth - _tipPadX, h: _tipMeter.offsetHeight - _tipPadY };
+  }
+  function ensureTipEl() {
+    if (_tipEl) {
+      // 确保双 span 结构（旧版本升级兼容：单 span → 补一个备用 span）
+      if (!_tipSpans) {
+        var olds = _tipEl.querySelectorAll(".tt-mtip-txt");
+        if (olds.length >= 2) {
+          _tipSpans = [olds[0], olds[1]];
+        } else {
+          var extra = document.createElement("span");
+          extra.className = "tt-mtip-txt";
+          extra.style.opacity = "0";
+          _tipEl.appendChild(extra);
+          _tipSpans = [olds[0], extra];
+        }
+        _tipActive = 0;
+        // 旧版用 left/top 定位：升级后清掉残留 inline 值，改由 transform 偏移驱动
+        _tipEl.style.left = ""; _tipEl.style.top = "";
+      }
+      return _tipEl;
+    }
+    _tipEl = document.createElement("div");
+    _tipEl.className = "tt-mtip";
+    var s1 = document.createElement("span");
+    s1.className = "tt-mtip-txt";
+    var s2 = document.createElement("span");
+    s2.className = "tt-mtip-txt";
+    _tipEl.appendChild(s1);
+    _tipEl.appendChild(s2);
+    document.body.appendChild(_tipEl);
+    _tipSpans = [s1, s2];
+    _tipActive = 0;
+    return _tipEl;
+  }
+  function showTip(btn) {
+    if (_tipTimer) { clearTimeout(_tipTimer); _tipTimer = null; }
+    var tip = ensureTipEl();
+    var newText = btn.getAttribute("data-tip") || "";
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;   // 气泡水平中心对准按钮中心
+    var y = r.top - 8;              // 气泡底部锚在按钮上缘上方 8px
+    // 复制按钮场景：菜单展开时垂直居中图标、气泡也在图标上方 → 矩形必然重叠，
+    // 被层级更高的菜单(z-index 99999>99998)盖住——气泡改锚菜单上缘上方 8px，永不重叠
+    if (btn.classList.contains("tt-copy-icon") && _menuEl && _menuEl.style.opacity === "1") {
+      var mTop = parseFloat(_menuEl.style.top);
+      if (!isNaN(mTop)) y = Math.max(4, mTop - 8);
+    }
+    var targetTransform = "translate(" + x + "px," + y + "px) translate(-50%,-100%)";
+    if (!tip.classList.contains("show")) {
+      // 首次显示：瞬移到位（禁过渡，防从(0,0)滑入）→ 测尺寸锁定 → 淡入
+      var firstSize = tipTextSize(newText);
+      _tipFixedH = firstSize.h;           // 锁定单行内容高，后续切换高度不变
+      _tipCurText = newText;
+      // 新文本放"显示位"span（加 .on 显示），备用位清空隐藏（去 .on）
+      var cur = _tipSpans[_tipActive];
+      var spare = _tipSpans[1 - _tipActive];
+      cur.textContent = newText;
+      cur.classList.add("on");
+      spare.textContent = "";
+      spare.classList.remove("on");
+      tip.style.transition = "none";
+      tip.style.transform = targetTransform;
+      tip.style.width = firstSize.w + "px";
+      tip.style.height = firstSize.h + "px";
+      void tip.offsetWidth;         // 强制 reflow 提交位置后再恢复过渡（否则淡入也失效）
+      tip.style.transition = "";
+      tip.classList.add("show");
+      return;
+    }
+    // 已显示：交叉淡入淡出 + 宽度无缝过渡（无真空期：新文字立即淡入，与旧文字淡出重叠）
+    var token = ++_tipAnimToken;
+    var oldSpan = _tipSpans[_tipActive];     // 旧文字（去 .on 淡出）
+    var newSpan = _tipSpans[1 - _tipActive]; // 备用位（加 .on 放新文字淡入）
+    // 宽度起点 = 旧文本的精确测量宽（确定性值，与元素渲染状态无关，绝无积累）
+    var oldWc = tipTextSize(_tipCurText).w;
+    tip.style.transform = targetTransform;   // 位置丝滑滑行
+    tip.style.width = oldWc + "px";
+    tip.style.height = _tipFixedH + "px";    // 高度恒定
+    // 交叉淡化：新文字立即加 .on 淡入、旧文字同时去 .on 淡出（纯类驱动——
+    // 透明度此消彼长守恒，无真空、无叠印；快速来回时文字即时出现）
+    newSpan.textContent = newText;
+    newSpan.classList.add("on");             // 新文字淡入
+    oldSpan.classList.remove("on");          // 旧文字淡出
+    _tipActive = 1 - _tipActive;
+    _tipCurText = newText;           // 下次切换的锁定宽依据
+    void tip.offsetWidth;            // 锁宽度过渡起点
+    tip.style.width = tipTextSize(newText).w + "px";  // 宽度过渡到新文本精确宽
+    // 淡出完成后旧 span 转备用（去 .on 已生效 + 清空文本），token 防快速切换时误清新文字
+    setTimeout(function () {
+      if (_tipAnimToken !== token) return;
+      oldSpan.classList.remove("on");
+      oldSpan.textContent = "";    // 清空备用位：防残留文本与下轮文字叠印
+    }, 180);
+  }
+  function hideTip() {
+    if (_tipTimer) clearTimeout(_tipTimer);
+    stopTipKeep();
+    _tipTimer = setTimeout(function () {
+      if (_tipEl) _tipEl.classList.remove("show");
+    }, 60);
+  }
+
+  // ---- 描述气泡事件模型（延迟显示 + 缝隙保持） ----
+  // 未显示：hover 宿主 500ms 后才显示（对齐原生 title 节奏）；缝隙/其它区域取消挂起（不主动显示）
+  // 已显示：宿主间切换即时交叉淡化（丝滑衔接）；缝隙不隐藏（坐标判定 + 轮询保鲜统一兜底）
+  function nearTipHost(x, y, el, pad) {
+    if (!el || !el.isConnected) return false;
+    var r = el.getBoundingClientRect();
+    return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
+  }
+  // 统一保持区判定：工具栏容器矩形（整个工具栏=按钮区域：按钮+缝隙+计数行+padding）
+  // ∪ 各宿主外扩 TIP_NEAR_PX（复制图标±10px，顺带覆盖图标↔圆圈 gap）。
+  // 鼠标在内 → 气泡保持；离开全部保持区 → 隐藏。事件通道无论走哪条路径最终都落到这里判定
+  function nearAnyTipZone(x, y) {
+    var bar = document.querySelector(".tt-multi-bar");
+    if (nearTipHost(x, y, bar, 0)) return true;
+    var hosts = document.querySelectorAll(TIP_HOST_SEL);
+    for (var i = 0; i < hosts.length; i++) {
+      if (nearTipHost(x, y, hosts[i], TIP_NEAR_PX)) return true;
+    }
+    return false;
+  }
+  // 保鲜轮询：每 150ms 用鼠标坐标重判保持区——保持区内保持，离开则隐藏。
+  // 是"缝隙→远处"路径（两条事件的非宿主分支都拿不到宿主上下文）的统一兜底
+  function startTipKeep() {
+    if (_tipKeepTimer) return;
+    _tipKeepTimer = setInterval(tipKeepCheck, 150);
+  }
+  function stopTipKeep() {
+    if (_tipKeepTimer) { clearInterval(_tipKeepTimer); _tipKeepTimer = null; }
+  }
+  function tipKeepCheck() {
+    if (!_tipEl || !_tipEl.classList.contains("show")) { stopTipKeep(); return; }
+    if (nearAnyTipZone(_lastMouseX, _lastMouseY)) return;
+    stopTipKeep();
+    hideTip();
+  }
+  document.addEventListener("mouseover", function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest(TIP_HOST_SEL) : null;
+    if (!btn) {
+      // 不在宿主上（缝隙/消息行/页面任意处）：取消挂起的延迟显示——缝隙不会主动显示
+      if (_tipShowTimer) { clearTimeout(_tipShowTimer); _tipShowTimer = null; }
+      // 已显示的气泡按坐标即时判定：保持区内（缝隙/工具栏）→ 轮询接管保持；
+      // 远处 → 立即隐藏（修复"移到很远都不消失"：非宿主区域必须由这里收口）
+      if (_tipEl && _tipEl.classList.contains("show")) {
+        if (nearAnyTipZone(e.clientX, e.clientY)) startTipKeep();
+        else hideTip();
+      }
+      return;
+    }
+    if (_tipEl && _tipEl.classList.contains("show")) { stopTipKeep(); showTip(btn); return; }
+    // 未显示：挂起延迟；挂起期间换宿主/经缝隙往返都会重置计时
+    if (_tipShowTimer) clearTimeout(_tipShowTimer);
+    _tipShowTimer = setTimeout(function () {
+      _tipShowTimer = null;
+      if (!btn.isConnected) return;   // 挂起期间按钮被工具栏重建：不显示（防死节点定位到 (0,0)）
+      showTip(btn);
+    }, TIP_SHOW_DELAY);
+  });
+  document.addEventListener("mouseout", function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest(TIP_HOST_SEL) : null;
+    var to = e.relatedTarget;
+    if (!btn) {
+      // 离开的不是宿主（工具栏缝隙/计数行/padding 等）：已显示的气泡交给轮询按坐标判定
+      //（覆盖"缝隙→远处"路径——否则没有任何分支负责隐藏，气泡卡死不消失）
+      if (_tipEl && _tipEl.classList.contains("show")) startTipKeep();
+      return;
+    }
+    if (to && btn.contains(to)) return;
+    // DOM 快路径：去向仍在工具栏内（按钮间缝隙/计数行）或落在任一宿主上 → 保持显示。
+    // 同时启动保鲜轮询：后续若从缝隙直接移出工具栏，由轮询收口隐藏（快路径本身不隐藏）
+    if (to && to.closest && to.closest(TIP_HOST_SEL + ", .tt-multi-bar")) {
+      if (_tipEl && _tipEl.classList.contains("show")) startTipKeep();
+      return;
+    }
+    // 坐标兜底：已显示且鼠标仍在源宿主外扩 10px 内（穿 gap 瞬间）→ 保持 + 启动保鲜轮询
+    if (_tipEl && _tipEl.classList.contains("show") && nearTipHost(e.clientX, e.clientY, btn, TIP_NEAR_PX)) {
+      startTipKeep();
+      return;
+    }
+    // 未显示挂起中移开 → 取消挂起；真离开 → 延迟隐藏
+    if (_tipShowTimer) { clearTimeout(_tipShowTimer); _tipShowTimer = null; }
+    hideTip();
+  });
+
+  // ---- 复制安全通道 ----
+  // 问题：batch 复制拼接可达上百 KB～MB 级，navigator.clipboard.writeText 存在容量上限
+  // （Chromium 约 4MB，特定条件下更小 payload 也会静默截断）；且旧实现无 .catch，
+  // 异步失败完全静默——用户看到"复制变短"却毫无提示。
+  // 方案：小文本走 writeText（补 .catch 降级）；超长文本直接走 textarea+execCommand
+  // 同步通道（无容量配额）；两条通道都失败则 onFail 明确反馈，绝不假装成功。
+  var COPY_CAP = 1000000; // 字符阈值：超过直接改道 execCommand（防止静默截断）
+  function copySafe(txt, onOk, onFail) {
+    function byExec() {
+      var ok = false;
+      var ta = null;
+      try {
+        ta = document.createElement("textarea");
+        ta.value = txt;
+        ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
+        ta.setAttribute("readonly", "");
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, txt.length);
+        ok = document.execCommand("copy");
+      } catch (e) { ok = false; }
+      finally {
+        if (ta) { document.body.removeChild(ta); }
+      }
+      if (ok) { if (onOk) onOk(); }
+      else { if (onFail) onFail(); }
+    }
+    if (!txt) return;
+    if (txt.length > COPY_CAP) { byExec(); return; }
+    try {
+      navigator.clipboard.writeText(txt).then(function () { if (onOk) onOk(); }, byExec);
+    } catch (ex) { byExec(); }
+  }
+
+  // ---- 新版（2026-10-09）DOM 兼容工具 ----
+  // 新架构把消息文本改为 SVG 渲染，且同一文本渲染两遍：描边层（fill="none" + stroke）
+  // 与填充层。直接读 textContent 会得到双份文本（如 "名字:名字:内容内容"）。
+  // 用户名也从 HTML 的 .username 变为 [class="{playerId}-messageUsername"]。
+  var USER_SEL = '.username, [class*="messageUsername"]';
+  // 取用户名元素（填充层）：用「包含」匹配 class 以免属性格式差异（尾随空格等）导致漏检，
+  // 再显式排除描边层（class 含 Stroke / fill="none"），避免把描边节点也当成用户名。
+  function queryUsers(root) {
+    var out = [];
+    try {
+      var all = root.querySelectorAll(USER_SEL);
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        var cls = (el.getAttribute && el.getAttribute("class")) || "";
+        if (cls.indexOf("Stroke") !== -1) continue;
+        if (el.getAttribute && el.getAttribute("fill") === "none") continue;
+        out.push(el);
+      }
+    } catch (e) {}
+    return out;
+  }
+  // 剔除 SVG 描边层，消除文本重复
+  function stripStrokeLayers(root) {
+    var nodes = root.querySelectorAll('text[fill="none"], [class*="Stroke"]');
+    for (var i = nodes.length - 1; i >= 0; i--) {
+      if (nodes[i].parentNode) nodes[i].parentNode.removeChild(nodes[i]);
+    }
+  }
+
+  // 从（已去描边层的）消息节点提取纯文本。
+  // 新版游戏把**每个词**渲染成独立 <text>，靠 x/y 坐标定位——空格与换行都不在文本里，
+  // 因此直接读 textContent 会把词粘死（"messagemewith2accagain"）。
+  // 折行/换行处的分隔判据（2026-10-12 修复"复制出多余换行 + 换行处编码截断"）：
+  //   · 游戏 split(" ") 后中文编码串整串=一个词，超长时从字符中间硬切（bundle: word.slice(se)）。
+  //   · 硬切点落在组内 → 解码钩子留半截 ~XX 记为欠账、给续片打 data-tt-join 标记 → 直拼（无分隔）。
+  //   · 硬切点落在组边界（~XXXX|~XXXX）→ 两半各自完整、无标记，但与"英文词边界换行"在坐标上同构，
+  //     无法用坐标区分；改用**边界字符书写系统**判：两侧皆 CJK → 原文必无分隔 → 直拼；
+  //     否则可能是英文词间空格 → 补空格。复制的是已解码文本，此判据对中文主场景精确。
+  //     （注：判据只含 CJK 是刻意的——俄/孟加拉/阿拉伯等语言词间**有**空格，词边界折行必须补空格；
+  //     泰语等无空格文字落在组边界时可能多补一个空格，属已知可接受边角。）
+  //   · 绝不输出 \n：游戏消息不含真实换行（发送者没打过的分隔符不应被复制出来）。
+  // 非 SVG 结构（旧版 HTML 渲染）自动退回 textContent。
+  var CJK_RE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
+  function svgTextOf(root) {
+    var nodes = root.querySelectorAll("text");
+    if (!nodes.length) return (root.textContent || "").trim();
+    var items = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      var cls = (el.getAttribute && el.getAttribute("class")) || "";
+      if (cls.indexOf("Stroke") !== -1) continue;
+      if (el.getAttribute && el.getAttribute("fill") === "none") continue;
+      var t = el.textContent;
+      if (!t) continue;                                  // 跳过空占位 <text>
+      var x = parseFloat(el.getAttribute("x"));
+      var y = parseFloat(el.getAttribute("y"));
+      var w = 0;
+      try { w = el.getComputedTextLength ? el.getComputedTextLength() : 0; } catch (e) { w = 0; }
+      items.push({ x: isNaN(x) ? 0 : x, y: isNaN(y) ? 0 : y, w: w, text: t,
+                   join: !!(el.getAttribute && el.getAttribute("data-tt-join") === "1") });
+    }
+    if (!items.length) return (root.textContent || "").trim();
+    items.sort(function (a, b) { return (a.y - b.y) || (a.x - b.x); });
+    var s = "", prev = null;
+    for (var j = 0; j < items.length; j++) {
+      var it = items[j];
+      if (prev) {
+        var wrap = Math.abs(it.y - prev.y) > 1;          // 是否换到下一行
+        if (!it.join) {                                  // 非硬切续片才考虑插分隔
+          if (wrap) {
+            // 换行处：CJK↔CJK 视为原文无分隔（编码串折行）直拼；否则英文词边界补空格。绝不 \n。
+            var prevLast = prev.text.charAt(prev.text.length - 1);
+            var curFirst = it.text.charAt(0);
+            if (!(CJK_RE.test(prevLast) && CJK_RE.test(curFirst))) s += " ";
+          } else if (it.x - (prev.x + prev.w) > 1.5) {
+            s += " ";                                    // 同 Y 间距 > 阈值 → 原文此处有空格
+          }
+        }
+      }
+      s += it.text;
+      prev = it;
+    }
+    return s.trim();
+  }
+
+  // 拼接选中消息文本（复制/导出共用）：_withNames=true 含发消息者名字；false 只保留正文
+  function buildSelectedText() {
     var parts = [];
     for (var i = 0; i < _checkedSet.length; i++) {
       var row = _checkedSet[i];
       var clone = row.cloneNode(true);
+      stripStrokeLayers(clone);
       if (!_withNames) {
-        var sender = clone.querySelector(".username");
-        if (sender) {
-          // 去掉紧随发消息者名字后的"冒号+空格"：兼容文本节点与仅含冒号的元素节点
-          var sib = sender.nextSibling;
-          while (sib) {
-            if (sib.nodeType === 3) {
-              var m = /^[\s]*[:：][\s]*/.exec(sib.textContent);
-              if (m) sib.textContent = sib.textContent.slice(m[0].length);
-              if (sib.textContent) break;
-              sib.parentNode.removeChild(sib);
-              sib = sender.nextSibling;
-              continue;
-            }
-            if (sib.nodeType === 1) {
-              if (/^[\s]*[:：][\s]*$/.test(sib.textContent || "")) {
-                sib.parentNode.removeChild(sib);
-                sib = sender.nextSibling;
-                continue;
-              }
-              break;
-            }
-            break;
-          }
-          sender.remove();
+        var senders = queryUsers(clone);
+        for (var si = 0; si < senders.length; si++) {
+          if (senders[si].parentNode) senders[si].parentNode.removeChild(senders[si]);
         }
       }
-      parts.push((clone.textContent || "").trim());
+      var line = svgTextOf(clone);
+      if (!_withNames) line = line.replace(/^[\s:：]+/, "");   // 清掉名字残留的前导冒号
+      parts.push(line);
     }
-    var txt = parts.join("\n");
-    if (!txt) return;
-    try { navigator.clipboard.writeText(txt).then(function () { flashStatusBar(); }); }
-    catch (ex) {
-      var ta = document.createElement("textarea");
-      ta.value = txt; ta.style.cssText = "position:fixed;opacity:0;";
-      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
-      document.body.removeChild(ta); flashStatusBar();
-    }
+    return parts.join("\n");
   }
 
-  function flashStatusBar() {
-    if (!_statusBarEl) return;
-    var oldBorder = _statusBarEl.style.border;
-    var oldShadow = _statusBarEl.style.boxShadow;
-    // 复制成功：工具栏边缘闪绿（圆角边框+光晕）
-    _statusBarEl.style.border = "1px solid rgba(77,255,136,0.9)";
-    _statusBarEl.style.boxShadow = "0 0 16px rgba(77,255,136,0.8)";
+  // 复制选中消息
+  function copySelected() {
+    if (_checkedSet.length === 0) return;
+    var txt = buildSelectedText();
+    if (!txt) return;
+    copySafe(txt, function () { flashStatusBar(false); }, function () { flashStatusBar(true); });
+  }
+
+  // 导出选中为 TXT 文件：走 Blob 下载，完全绕开剪贴板容量限制，聊天记录绝不截断
+  function exportSelected() {
+    if (_checkedSet.length === 0) return;
+    var txt = buildSelectedText();
+    var n = _checkedSet.length;
+    if (!txt) return;
+    function p2(x) { return (x < 10 ? "0" : "") + x; }
+    // 下载与 UI 反馈解耦：即使下载环节异常，也不会跳过导出信息/动画（保证可自查条数）
+    var dlErr = null;
+    try {
+      var d = new Date();
+      var name = "chat-export-" + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) +
+                 "-" + p2(d.getHours()) + p2(d.getMinutes()) + ".txt";
+      var blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { a.remove(); URL.revokeObjectURL(url); }, 100);
+    } catch (e) {
+      dlErr = e;
+    }
+    flashStatusBar(!!dlErr);
+    // 状态栏临时显示导出条数与字符数，用"覆盖文案 + 统一渲染"避免被 updateStatusBar 重建打断
+    var msg = escapeHTML((_L("exported") || "Exported {0} msgs · {1} chars"))
+      .replace("{0}", "<b>" + n + "</b>").replace("{1}", "<b>" + txt.length + "</b>");
+    var token = ++_statusAnimToken;
+    _statusOverride = msg;
+    fadeStatusBarTo(function () {
+      if (token !== _statusAnimToken) return;
+      updateStatusBar(); // 此处 _statusOverride 生效，渲染导出信息
+    });
+    // 2400ms 后淡出→恢复原文案→淡入，让状态栏回到"已选 n 条"
     setTimeout(function () {
+      if (token !== _statusAnimToken) return;
+      var bar = getOrCreateStatusBar();
+      if (!bar || !bar.parentNode) return;
+      fadeStatusBarTo(function () {
+        if (token !== _statusAnimToken) return;
+        _statusOverride = null;
+        updateStatusBar();
+      });
+    }, 2400);
+  }
+
+  // 工具栏整体淡出再淡入：先淡出（opacity→0）→ 在暗场执行 cb（换文案）→ 淡入（opacity→1）
+  function fadeStatusBarTo(cb) {
+    var bar = getOrCreateStatusBar();
+    if (!bar || !bar.parentNode) { if (cb) cb(); return; }
+    bar.classList.remove("show");
+    bar.classList.add("tt-fade");
+    setTimeout(function () {
+      if (!bar || !bar.parentNode) return;
+      if (cb) cb(); // 此时仍是暗场，先把文案换成导出信息
+      bar.classList.remove("tt-fade");
+      bar.classList.add("show");
+      positionMultiBar();
+    }, 180);
+  }
+
+  function flashStatusBar(err) {
+    if (!_statusBarEl) return;
+    // 通过 class 切换触发 box-shadow 过渡：绿框/红框平滑淡入，停留后平滑淡出
+    // （相比直接改 inline style：过渡由 CSS 接管，出现/消失都有动画，且 box-shadow
+    //  绝对定位层不占布局，边框出现时工具栏不再有 1px 位移抖动）
+    _statusBarEl.classList.remove("tt-flash-ok", "tt-flash-err");
+    _statusBarEl.classList.add(err ? "tt-flash-err" : "tt-flash-ok");
+    clearTimeout(_flashTimer);
+    _flashTimer = setTimeout(function () {
       if (!_statusBarEl) return;
-      _statusBarEl.style.border = oldBorder;
-      _statusBarEl.style.boxShadow = oldShadow;
+      _statusBarEl.classList.remove("tt-flash-ok", "tt-flash-err");
     }, 500);
   }
 
@@ -1434,10 +2026,12 @@
      menu.appendChild(fullItem);
      _menuItems.push({ el: fullItem, type: "full" });
 
-     var users = _currentRow.querySelectorAll(".username");
+     var users = queryUsers(_currentRow);
      for (var i = 0; i < users.length; i++) {
        (function (userEl) {
-         var name = (userEl.textContent || "").replace(/:\s*$/, "").trim();
+         // 用户名元素的文本自带游戏追加的分隔符（"," / ":" / " @"）→ 必须剥掉尾部符号，
+         // 否则"复制名字"会带出多余字符（如 "L_Shy_P @"、"ThanKhoaiLangdzz,"）
+         var name = (userEl.textContent || "").replace(/[\s@,，:：]+$/, "").trim();
          if (!name) return;
          var uItem = document.createElement("div");
          uItem.className = "tt-copy-item";
@@ -1628,7 +2222,7 @@
       return;
     }
     var icon = getOrCreateIcon();
-    icon.title = _L("title");
+    icon.setAttribute("data-tip", _L("title"));
     var p = computeCheckPos(row);
     // 可见切换行：CSS left/top 过渡丝滑滑到新位置（ease-out 起步即快，单调无回摆）；
     // 隐藏恢复：禁用过渡瞬移落位，避免从旧位置"飞"过来
@@ -1686,24 +2280,19 @@
     var row = _currentRow;
     if (!row) return;
     var clone = row.cloneNode(true);
-    var users = clone.querySelectorAll(".username");
-    for (var i = 0; i < users.length; i++) { users[i].parentNode.removeChild(users[i]); }
-    var txt = (clone.textContent || "").trim();
+    stripStrokeLayers(clone);
+    var users = queryUsers(clone);
+    for (var i = 0; i < users.length; i++) { if (users[i].parentNode) users[i].parentNode.removeChild(users[i]); }
+    var txt = svgTextOf(clone).replace(/^[\s:：]+/, "");
     if (!txt) return;
-    try { navigator.clipboard.writeText(txt).then(flashIcon); }
-    catch (ex) {
-      var ta = document.createElement("textarea");
-      ta.value = txt; ta.style.cssText = "position:fixed;opacity:0;";
-      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
-      document.body.removeChild(ta); flashIcon();
-    }
+    copySafe(txt, function () { flashIcon(false); }, function () { flashIcon(true); });
   }
 
-  function flashIcon() {
+  function flashIcon(err) {
     if (!_iconEl) return;
     _iconEl.style.transform = "scale(0.85)";
-    _iconEl.style.background = "rgba(76,175,80,0.25)";
-    _iconEl.style.borderColor = "#4caf50";
+    _iconEl.style.background = err ? "rgba(255,85,85,0.3)" : "rgba(76,175,80,0.25)";
+    _iconEl.style.borderColor = err ? "#e5484d" : "#4caf50";
     setTimeout(function () {
       if (!_iconEl) return;
       _iconEl.style.transform = "scale(1)";
@@ -1718,35 +2307,27 @@
     var txt;
     if (type === "text") {
       var clone = row.cloneNode(true);
-      var users = clone.querySelectorAll(".username");
-      for (var i = 0; i < users.length; i++) { users[i].parentNode.removeChild(users[i]); }
-      txt = (clone.textContent || "").trim();
+      stripStrokeLayers(clone);
+      var users = queryUsers(clone);
+      for (var i = 0; i < users.length; i++) { if (users[i].parentNode) users[i].parentNode.removeChild(users[i]); }
+      txt = svgTextOf(clone).replace(/^[\s:：]+/, "");
     } else if (type === "full") {
-      txt = (row.textContent || "").trim();
+      var cloneFull = row.cloneNode(true);
+      stripStrokeLayers(cloneFull);
+      txt = svgTextOf(cloneFull);
     } else {
-      txt = (name || "").replace(/:\s*$/, "").trim();
+      txt = (name || "").replace(/[\s@,，:：]+$/, "").trim();
     }
     if (!txt) return;
-    try {
-      navigator.clipboard.writeText(txt).then(function () { flashItem(ev.target); });
-    } catch (ex) {
-      var ta = document.createElement("textarea");
-      ta.value = txt;
-      ta.style.cssText = "position:fixed;opacity:0;";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      flashItem(ev.target);
-    }
+    copySafe(txt, function () { flashItem(ev.target, false); }, function () { flashItem(ev.target, true); });
   }
 
-  function flashItem(el) {
+  function flashItem(el, err) {
     if (!el) return;
     var item = el.closest && el.closest(".tt-copy-item");
     if (!item) item = el;
     var origBG = item.style.background;
-    item.style.background = "rgba(76,175,80,0.2)";
+    item.style.background = err ? "rgba(255,85,85,0.25)" : "rgba(76,175,80,0.2)";
     setTimeout(function () { item.style.background = origBG; }, 600);
   }
 
@@ -1763,10 +2344,124 @@
 
   console.log("[TT] icon-triggered copy menu ready");
 
+  // ================= 新版（DOM 适配器）发送层 =================
+  // 游戏 sendChat() 首行检查 `this.chatInput.prop("disabled")`，其 _parseChat() 直接读
+  // `this.chatInput.val().trim()` —— 只要在"游戏自己的 keydown 处理器之前"改写输入框内容，
+  // 游戏就会按编码后的文本发送。
+  // 坑（2026-10-10 修复"中文发不出去"）：监听器不能绑在输入框自身上——目标元素上的监听器
+  // 与游戏处理器同处 target 阶段、**按注册顺序**触发，而游戏必然先注册（#chat 的 append 与
+  // keydown 绑定在同一同步块完成，扩展只能在之后的 task 才感知到 #chat）→ 游戏先读到未编码的
+  // 中文 → 被服务器拒收（现象：英文能发、中文发不出去）。改绑 document 的**捕获阶段**：
+  // 捕获阶段一定早于 target 阶段，与注册顺序无关；用 e.target + #chat 动态判定，聊天框重建也不失效。
+  // 坑（2026-10-10 二修"中文时好时坏发不出去"）：挂载**不得**以"此刻输入框已存在"为前提——
+  // 监听器是 document 委托式（按事件目标判定），与输入框创建时机无关；旧实现却用 `CB.chatInput[0]`
+  // 作门槛，一旦首次探测聊天容器时输入框尚未由游戏创建，监听器便不挂载，而 hook() 仍返回 true
+  // 让轮询停止、tt-chatbox-ready 事件又无人派发（死代码）→ 挂载失败即**永久失败**，只能刷新页面。
+  // （英文此前"正常"只是因为它不需要编码、由游戏自己发送，与挂载是否成功无关。）
+  var _domSenderInstalled = false;
+  function installDomSender() {
+    if (_domSenderInstalled) return;
+    _domSenderInstalled = true;
+    try { console.log("[TT] DOM sender armed (document-capture keydown)"); } catch (e) {}
+    document.addEventListener("keydown", function (e) {
+      var el = e.target;
+      // 裸诊断（只在 Enter 时打印一次，避免逐键刷屏）：确认监听器是否触发、事件目标真实标签。
+      // 按回车后这行不出现 = 监听未挂载（页面未刷新/扩展未重载）或被更外层的捕获监听截断；
+      // tag 不是 TEXTAREA/INPUT = 游戏改了输入框结构（下方守卫会拦下，可据此调整判定）。
+      try {
+        if (el && el.closest && el.closest("#chat") && e.key === "Enter") {
+          console.log("[TT] sender: raw keydown — tag=" + el.tagName + " key=" + e.key + " code=" + e.code + " composing=" + e.isComposing + " shift=" + e.shiftKey + " valueLen=" + (el.value ? el.value.length : 0));
+        }
+      } catch (err) {}
+      if (!el || (el.tagName !== "TEXTAREA" && el.tagName !== "INPUT") || !el.closest || !el.closest("#chat")) return;
+      if (e.key !== "Enter" || e.shiftKey) return;
+      // 诊断日志（现场排查用）：Enter 到达扩展时各条件状态。
+      // 现象对照：这行不出现 = 监听没跑（页面未刷新/扩展未重载/被别的扩展拦截）；
+      // 出现但随后没有 encoded 行 = 被 composing/disabled/无中文 条件挡下。
+      try { console.log("[TT] sender: Enter — composing=" + e.isComposing + " disabled=" + el.disabled + " nonAscii=" + hasNonAscii(el.value)); } catch (err) {}
+      if (e.isComposing) return;                  // 输入法组合中（回车确认候选词）：绝不改写
+      if (el.disabled) return;                    // 发送中：游戏会忽略这次回车，内容不许动
+      var raw = el.value;
+      if (!raw || !raw.trim()) return;
+      var out = buildOutgoingText(raw);
+      if (!out || out === raw) return;
+      el.value = out;                             // 写回编码文本，游戏随后读取并发送
+      try { console.log("[TT] sender: encoded " + raw.length + "→" + out.length + " chars: " + out.slice(0, 60)); } catch (err) {}
+      // 收尾：清掉编码文本、还原输入框高度（等价老版"回车即清空"），避免编码串在框内可见。
+      // 仅当"我写入的编码文本仍原样在框内、且游戏已进入发送（disabled）"才清：普通发送本次
+      // 事件内同步 disable（microtask 赶上渲染前清除）；@私聊要等异步查名后才 disable
+      // （250ms/800ms 两档兜底）；若用户已动过输入框（value ≠ out）则永不误清。
+      var cleanup = function () {
+        if (el.value === out && el.disabled) {
+          el.value = "";
+          try { if (window.jQuery) window.jQuery(el).outerHeight(16); } catch (err) {}
+        }
+      };
+      if (typeof queueMicrotask === "function") queueMicrotask(cleanup);
+      else setTimeout(cleanup, 0);
+      setTimeout(cleanup, 250);
+      setTimeout(cleanup, 800);
+    }, true);
+  }
+
+  // 组装待发送文本：保护游戏自身的前缀语法（# 全局 / @ 提及 / /r 私聊），只编码正文——
+  // 前缀要被游戏的 _parseChat 解析出收件人与全局标志，被编码会破坏识别。
+  function buildOutgoingText(raw) {
+    var s = String(raw).replace(/^\s+/, "");
+    var prefix = "";
+    if (s.charAt(0) === "#") {
+      prefix = "#"; s = s.slice(1);
+    } else {
+      var m;
+      while ((m = s.match(/^@\S+\s+/))) { prefix += m[0]; s = s.slice(m[0].length); }
+      if (s.slice(0, 2) === "/r") {
+        var rest = s.slice(2).replace(/^\s+/, "");
+        var sp = rest.indexOf(" ");
+        if (sp > 0) { prefix += "/r " + rest.slice(0, sp) + " "; s = rest.slice(sp + 1); }
+      }
+    }
+    if (!s) return raw;
+    if (settings.enc && hasNonAscii(s)) {
+      var enc = settings.fmt === "v1" ? encodeV1(s) : encodeV2(s);
+      return prefix + enc + V2_VER + (settings.sig ? " [Chat Unblocker]" : "");
+    }
+    return prefix + s;
+  }
+
+  // 切换编码开关时刷新已渲染的消息（供 DOM 适配器的 _refreshChat 调用）。
+  // 消息由 SVG 渲染、原始编码文本不在 DOM 中，无法就地还原；但游戏的 _refreshChat()
+  // 会从消息数组**重新渲染全部消息**，而重渲染必然经过 early-hook 劫持的 SVG text()，
+  // 于是会按当前开关状态重新解码 / 原样渲染。本函数负责触发那次重绘。
+  function refreshDecodedMessages() {
+    // 首选：走 resize 手柄的 resizable 回调——游戏源码里该回调正是 `this._refreshChat(!0)`
+    try {
+      var jq = window.jQuery;
+      if (jq) {
+        var candidates = document.querySelectorAll("#chat .body .ui-resizable-handle, #chat .body");
+        for (var i = 0; i < candidates.length; i++) {
+          var inst = jq.data(candidates[i], "ui-resizable");
+          if (inst && inst.options && typeof inst.options.stop === "function") {
+            inst.options.stop();
+            console.log("[TT] messages refreshed via resizable stop callback");
+            return;
+          }
+        }
+      }
+    } catch (e) {}
+    // 兜底：模拟点击聊天图标（关闭 → 重开）——游戏的 open() 内部会 setTimeout(_refreshChat, 300)
+    try {
+      var icon = document.querySelector("#chat img.status.button");
+      if (icon) {
+        icon.click();
+        setTimeout(function () { if (icon.isConnected) icon.click(); }, 320);
+        console.log("[TT] messages refreshed via chat open/close cycle");
+      }
+    } catch (e) {}
+  }
+
   function hook() {
-    var TT = window.TankTrouble;
-    if (!TT || !TT.ChatBox) return false;
-    var CB = TT.ChatBox;
+    var CB = getCB();
+    if (!CB) return false;
     console.log("[TT] hooked V" + VERSION);
 
     // ---- 标记聊天框DOM（优先使用chatBody，fallback到chat） ----
@@ -1775,6 +2470,20 @@
       chatEl.setAttribute("data-tt-chat-body", "1");
       console.log("[TT] marked chat body:", chatEl.tagName, chatEl.className || "(no class)");
     }
+
+    // ================= 新版游戏（2026-10-09 闭包化）分支 =================
+    // ChatBox 不可得 → 职责拆到两层：
+    //   · 接收/解码：early-hook.js 劫持 SVG.js 的 text()（渲染与测量同一路径），
+    //     调用 window.__TT_DECODE__ —— 布局与显示内容天然一致；
+    //   · 发送/编码：本分支在输入框 keydown 捕获阶段改写 value ——
+    //     游戏 sendChat() → _parseChat() 直接读 chatInput.val()，因此拿到的就是编码文本。
+    if (CB.__domAdapter) {
+      installDomSender();
+      ensureChatMarked();
+      console.log("[TT] DOM-mode hooks ready (send intercept + SVG decode)");
+      return true;
+    }
+    // ================= 以下为旧版（全局 ChatBox）逻辑，保持兼容 =================
 
     // ---- 发送 ----
     var origSendChat = CB.sendChat;
@@ -1850,10 +2559,10 @@
       $("body").append(indicator);
       indicator.on("mouseenter", showQueueBubble);
       indicator.on("mouseleave", hideQueueBubble);
-      // 物理跟随：输入区右侧垂直居中（轻质量跟手）
+      // 物理跟随：输入区右侧垂直居中（与常驻圆圈同款小元素弹簧：快跟手、低过冲）
       var fol = {
         el: indicator[0],
-        mass: 0.5, stiff: 0.09, damp: 0.86,
+        mass: 0.5, stiff: 0.055, damp: 0.70,
         cx: 0, cy: 0, vx: 0, vy: 0,
         getTarget: function () {
           var inp = getChatInputEl();
@@ -2157,12 +2866,25 @@
     return true;
   }
 
-  var n = 0;
+  // 2026-10-09 游戏重写后：ChatBox 不再挂全局，hook 只能靠轮询等待聊天容器出现——
+  // 出现时机不定（页面加载即建 / 连接服务器才建 / 挂机很久后才进局），可能远晚于页面加载。
+  // 重试通道有且只有这一个轮询：hook 成功即停（此刻发送监听必已挂载，见 installDomSender），
+  // 未成功则 5s 低频永久轮询、不设上限——旧版约 20 分钟后停掉，晚出现的聊天框将再也等不到
+  // hook（历史唤醒事件 tt-chatbox-ready 无人派发，已删除，不再假装有"双保险"）。
+  function tryHook() { return hook(); }
+
+  var n = 0, _hookFailNoted = false;
   (function go() {
     n++;
-    if (hook()) return;
-    // 游戏可能延迟创建 ChatBox（如首次点开消息栏时才初始化）：延长重试窗口到约30秒
-    if (n < 150) setTimeout(go, 200);
-    else console.warn("[TT] ChatBox not found");
+    if (tryHook()) return;
+    if (n < 150)       setTimeout(go, 200);    // 前 30 秒：高频
+    else {
+      // 进入长期低频：仅提示一次（聊天容器确实存在却始终 hook 失败时才记录，便于现场诊断）
+      if (!_hookFailNoted && document.querySelector("#chat")) {
+        _hookFailNoted = true;
+        console.log("[TT] chat container present but hook never succeeded (still retrying)");
+      }
+      setTimeout(go, 5000);                    // 5 秒低频，长期等待（挂机后进局 / 极晚创建）
+    }
   })();
 })();
